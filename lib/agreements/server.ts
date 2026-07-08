@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { appendAcceptedClauses, generateAgreementText } from "./text";
 import type { AgreementFormInput, AgreementFull, PartyInput } from "./types";
+import type { DraftedClause } from "./clauses";
 
 export async function generateReferenceNumber(supabase: SupabaseClient): Promise<string> {
   const year = new Date().getFullYear();
@@ -246,6 +247,73 @@ export async function updateAgreement(supabase: SupabaseClient, id: string, inpu
   if (agreementError) throw agreementError;
 
   return agreement;
+}
+
+export async function saveDraftedClauses(supabase: SupabaseClient, agreementId: string, clauses: DraftedClause[]) {
+  if (clauses.length === 0) return;
+  const { error } = await supabase.from("agreement_clauses").insert(
+    clauses.map((c) => ({
+      agreement_id: agreementId,
+      clause_text: c.clause_text,
+      clause_text_source: "openai/gpt-4o-mini",
+      clause_text_confidence: c.confidence,
+      clause_text_review_status: "unreviewed",
+      accepted: false,
+    })),
+  );
+  if (error) throw error;
+}
+
+async function rebuildGeneratedText(supabase: SupabaseClient, agreement: AgreementFull) {
+  const acceptedClauses = agreement.clauses.filter((c) => c.clause_text_review_status === "accepted").map((c) => c.clause_text);
+
+  const generatedText = generateAgreementText({
+    reference_number: agreement.reference_number,
+    landlords: agreement.landlords,
+    tenants: agreement.tenants.map((t) => ({
+      full_name: t.full_name,
+      id_number: t.id_number,
+      current_address: t.current_address,
+    })),
+    property: agreement.property,
+    rental_amount: agreement.rental_amount,
+    deposit_amount: agreement.deposit_amount,
+    lease_start_date: agreement.lease_start_date,
+    lease_end_date: agreement.lease_end_date,
+    payment_due_day: agreement.payment_due_day,
+    special_conditions: agreement.special_conditions,
+  });
+
+  return appendAcceptedClauses(generatedText, acceptedClauses);
+}
+
+export async function reviewClause(
+  supabase: SupabaseClient,
+  agreementId: string,
+  clauseId: string,
+  action: "accept" | "reject",
+  editedText?: string,
+) {
+  const { error: clauseError } = await supabase
+    .from("agreement_clauses")
+    .update({
+      clause_text_review_status: action === "accept" ? "accepted" : "rejected",
+      accepted: action === "accept",
+      ...(editedText ? { clause_text: editedText } : {}),
+    })
+    .eq("id", clauseId)
+    .eq("agreement_id", agreementId);
+  if (clauseError) throw clauseError;
+
+  const agreement = await getAgreementFull(supabase, agreementId);
+  if (!agreement) throw new Error("Agreement not found");
+
+  const finalText = await rebuildGeneratedText(supabase, agreement);
+
+  const { error: updateError } = await supabase.from("agreements").update({ generated_text: finalText }).eq("id", agreementId);
+  if (updateError) throw updateError;
+
+  return getAgreementFull(supabase, agreementId);
 }
 
 export async function deleteAgreement(supabase: SupabaseClient, id: string) {

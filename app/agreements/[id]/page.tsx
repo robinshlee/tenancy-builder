@@ -5,6 +5,7 @@ import { getAgreementFull } from "@/lib/agreements/server";
 import { Nav } from "@/app/components/Nav";
 import { DeleteAgreementButton } from "@/app/components/DeleteAgreementButton";
 import { DownloadPdfButton } from "@/app/components/DownloadPdfButton";
+import { ClauseReview } from "@/app/components/ClauseReview";
 
 export default async function AgreementPreviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -44,19 +45,7 @@ export default async function AgreementPreviewPage({ params }: { params: Promise
           {agreement.generated_text}
         </div>
 
-        {agreement.clauses.length > 0 && (
-          <div className="mt-6">
-            <h2 className="font-semibold mb-2">AI-Suggested Clauses</h2>
-            <ul className="space-y-2">
-              {agreement.clauses.map((c) => (
-                <li key={c.id} className="border border-neutral-200 rounded-md p-3 text-sm bg-white">
-                  <p>{c.clause_text}</p>
-                  <p className="text-xs text-neutral-500 mt-1 capitalize">Status: {c.clause_text_review_status}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <ClauseReview agreementId={id} clauses={agreement.clauses} />
       </main>
     </div>
   );
