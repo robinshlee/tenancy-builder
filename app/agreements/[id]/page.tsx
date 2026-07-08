@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAgreementFull } from "@/lib/agreements/server";
 import { Nav } from "@/app/components/Nav";
 import { DeleteAgreementButton } from "@/app/components/DeleteAgreementButton";
+import { DownloadPdfButton } from "@/app/components/DownloadPdfButton";
 
 export default async function AgreementPreviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -31,6 +32,7 @@ export default async function AgreementPreviewPage({ params }: { params: Promise
             <p className="text-sm text-neutral-500 capitalize">{agreement.status}</p>
           </div>
           <div className="flex items-center gap-4">
+            <DownloadPdfButton id={id} referenceNumber={agreement.reference_number} />
             <Link href={`/agreements/${id}/edit`} className="text-sm text-neutral-700 hover:underline">
               Edit
             </Link>
