@@ -1,29 +1,40 @@
-# Test Plan — Tenancy Builder
+# Test Plan
 
-## v1 Success Scenario (manual walkthrough)
+## Core Success Scenario — Generate a Tenancy Agreement
 
-1. **Open app** → `/` redirects to `/agreements`; 2 seeded demo agreements visible with status badges.
-2. **Add landlord** → `/landlords/new`; fill name, ID number, email; submit → appears in landlord list.
-3. **Add tenant** → `/tenants/new`; fill name, ID number, phone; submit → appears in tenant list.
-4. **Add property** → `/properties/new`; fill address, type = Apartment, 2 bedrooms; submit → appears in list.
-5. **Create agreement** → `/agreements/new`; select new landlord, new tenant, new property; enter rent = 3000, deposit = 6000, payment day = 1, start = next month 1st, end = 12 months later, special conditions = "No pets"; submit.
-6. **Verify persist** → redirected to `/agreements/[id]`; all entered fields displayed correctly.
-7. **Print PDF** → click "Download PDF"; browser print dialog opens; document contains landlord name, tenant name, property address, rent amount, dates.
-8. **Edit agreement** → change rent to 3200; save → detail page shows updated value.
-9. **Delete agreement** → confirm dialog appears; after confirm, agreement removed from list.
+1. Open `/agreements` — confirm 3 demo agreements are visible without logging in
+2. Click "New Agreement"
+3. Enter landlord: *Margaret Osei*, ID *GHA-8821045-3*, phone *+233 24 400 1111*
+4. Enter tenant: *James Boateng*, ID *GHA-9900112-7*, phone *+233 26 511 4444*
+5. Enter property: *14 Cantonments Road, Accra*
+6. Enter rent: *3500*, deposit: *7000*, start: *2025-02-01*, end: *2026-01-31*, due day: *1*
+7. Click Generate
+8. **Pass:** Redirected to `/agreements/[id]`; agreement text contains all entered values
+9. Click Download PDF
+10. **Pass:** PDF downloads, opens correctly, contains all fields including both party names and ID numbers
+11. Return to `/agreements`
+12. **Pass:** New agreement appears at top of list with correct reference number
 
-## Empty State Tests
-- `/agreements` with no rows → "No agreements yet. Create your first one." CTA shown.
-- `/landlords` with no rows → same empty state pattern.
+---
 
-## Error Cases
-- Submit agreement form with no landlord selected → inline error "Select at least one landlord".
-- Submit with lease end before lease start → inline error "End date must be after start date".
-- Supabase unreachable → error toast "Could not save. Please try again." No blank screen.
+## Empty State
+- Delete all agreements (or open a fresh DB) → `/agreements` shows "No agreements yet" CTA
+- `/agreements/[nonexistent-id]` → shows 404 message, not a crash
 
-## Edit/Delete Checks
-- Edit a seeded landlord name → list reflects new name immediately.
-- Delete a seeded property linked to an agreement → confirm dialog warns of linked agreement (or cascades and notifies).
+## Validation Errors
+- Submit form with `lease_end_date` before `lease_start_date` → inline error, form not submitted
+- Submit with landlord name missing → required field error highlighted
+- Submit with non-numeric rental amount → field error, no DB write
 
-## Loading States
-- Slow connection simulated via DevTools throttle → spinner visible on list pages; form submit button disabled while request is in flight.
+## Edit & Delete
+- Edit an agreement, change rent to 4000 → save → preview shows updated amount → DB row updated
+- Delete an agreement → confirmation dialog → confirm → removed from list → DB row gone
+- Cancel delete → agreement still in list
+
+## Error States
+- Supabase offline (simulate by revoking key) → form submission shows "Something went wrong. Please try again." — no crash, no empty white screen
+- PDF route fails → button shows error toast, does not navigate away
+
+## Security (Sprint 5)
+- Log in as Agent A, note agreement IDs → log out → log in as Agent B → attempt to fetch Agent A's agreement URL directly → receive 403 / empty result
+- Verify no Supabase service-role key appears in browser network tab at any point

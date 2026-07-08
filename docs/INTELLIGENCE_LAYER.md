@@ -1,40 +1,46 @@
-# Intelligence Layer — Tenancy Builder
+# Intelligence Layer
 
-## Messy Inputs
-- Free-text special conditions typed ad hoc per deal
-- Agents forget standard protective clauses
-- Property type + duration vary — correct clause set is not obvious
+## Messy Input → Structured Data
+Agent types free-form party names, IDs, and conditions. The form enforces structure before saving:
 
-## Auto-Structure Target (JSON)
 ```json
 {
-  "agreement_id": "uuid",
-  "suggested_clauses": [
-    {
-      "title": "Pet Policy",
-      "body": "No pets permitted without prior written consent.",
-      "source": "gpt-4o / clause-suggest-v1",
-      "confidence": 0.91,
-      "review_status": "unreviewed"
-    }
-  ]
+  "agreement_id": "d4000000-...",
+  "landlords": [{"full_name": "Margaret Osei", "id_number": "GHA-8821045-3"}],
+  "tenants": [{"full_name": "James Boateng", "id_number": "GHA-9900112-7"}],
+  "property": {"address": "14 Cantonments Road", "city": "Accra"},
+  "rental_amount": 3500.00,
+  "lease_start_date": "2025-02-01",
+  "lease_end_date": "2026-01-31",
+  "payment_due_day": 1
 }
 ```
 
-## Events That Trigger Suggestions
-- Agreement created with `property_type` and `lease_end - lease_start > 180 days`
-- Agent leaves `special_conditions` blank
+## Events to Track
+- Agreement created
+- Agreement previewed
+- PDF downloaded
+- Clause suggested (AI)
+- Clause accepted / rejected
 
 ## Scoring Rules (rule-based first)
-| Signal | Score boost |
+| Check | Flag |
 |---|---|
-| property_type = 'Apartment' | +10 pet/noise clauses |
-| duration > 12 months | +10 renewal-option clause |
-| deposit > 2× rent | +10 deposit-return clause |
+| lease_end < lease_start | Error — block submit |
+| deposit < rental_amount | Warning — unusually low deposit |
+| duration > 24 months | Info — confirm long lease |
+| ID number format invalid | Warning |
 
-Scores are 0–100; anything < 60 is flagged for mandatory review.
+These rules run in the server route before saving. No AI needed.
+
+## AI: Special Condition Drafting (later)
+- Trigger: agreement saved
+- Input: property_type, lease duration, rental_amount, agent's free-text notes
+- Output: 3 suggested special conditions stored in `agreement_clauses` with `source`, `confidence`, `review_status = 'unreviewed'`
+- Agent sees suggestions in preview with Accept / Edit / Reject buttons
+- Accepted clauses are appended to `generated_text`
 
 ## v1 vs Later
-- **v1:** no AI; agent types special conditions manually
-- **Next:** AI drafts suggestions stored with confidence + review_status; agent accepts/edits/rejects before saving
-- **Later:** fine-tuned on agent's accepted clauses; jurisdiction-aware suggestions
+- **v1:** rule-based validation only; no AI calls
+- **Next:** AI clause suggestions (server-side, key never in browser)
+- **Later:** AI risk scoring per agreement; clause library trained on past agreements

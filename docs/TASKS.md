@@ -1,80 +1,82 @@
-# Tasks — Tenancy Builder
+# Tasks & Sprints
 
-## Sprint 1 — DB, seed data, and entity forms
-**Goal:** All core tables exist; landlord, tenant, and property CRUD works end-to-end.
+## Sprint 1 — Database + Agreement Engine ✦ v1 functional milestone
+**Goal:** A real user can generate a tenancy agreement end-to-end against the database.
 
-- [ ] Run migration SQL (landlords, tenants, properties, agreements, agreement_parties, clauses, agreement_clauses, audit_logs)
-- [ ] Seed 3 landlords, 4 tenants, 3 properties, 2 agreements, 3 clauses
-- [ ] `/landlords` — list + add + edit + delete form; persists to DB
-- [ ] `/tenants` — list + add + edit + delete form; persists to DB
-- [ ] `/properties` — list + add + edit + delete form; persists to DB
-- [ ] Empty state, loading spinner, and error toast on all list pages
-- [ ] Nav bar linking all three sections
+- [ ] Run migration SQL (all tables, RLS, seed data)
+- [ ] `/agreements` list page — reads from DB, shows 3 demo agreements
+- [ ] Empty state: "No agreements yet. Create your first one."
+- [ ] `/agreements/new` — full form (landlord fields, tenant fields, property fields, rent, deposit, dates, payment day)
+- [ ] Client-side validation: required fields, date range check
+- [ ] POST `/api/agreements` — server route: validate → assemble `generated_text` → insert rows → return id
+- [ ] `/agreements/[id]` — preview page: fetch from DB, render full agreement text
+- [ ] Loading spinner, error boundary, 404 for unknown id
+- [ ] Edit agreement: form pre-filled from DB, PATCH route, UI updates
+- [ ] Delete agreement: confirmation dialog, DELETE route, removed from list
 
-**Definition of Done:** Seeded rows visible on load; agent can create a new landlord/tenant/property and see it in the list without page refresh.
-
----
-
-## Sprint 2 — Agreement builder engine ← **v1 FUNCTIONAL**
-**Goal:** Agent enters details once and gets a print-ready agreement. Core engine works.
-
-- [ ] `/agreements/new` — form: pick landlord(s), tenant(s), property; enter monthly rent, deposit, payment day, lease start/end, special conditions
-- [ ] On submit: persist `agreements` + `agreement_parties` rows
-- [ ] `/agreements/[id]` — formatted agreement document (all parties, property, terms, clauses)
-- [ ] Print stylesheet + "Download PDF" button (browser print-to-PDF)
-- [ ] `/agreements` — list all agreements with status badge
-- [ ] Edit agreement; delete with confirm dialog
-- [ ] Validate required fields; show inline errors
-- [ ] Empty/error/loading states
-
-**Definition of Done:** Agent completes full flow — new agreement → detail page → PDF in hand — without leaving the app. ✅ **v1 functional milestone**
+**Definition of Done:** Agent fills the new-agreement form, submits, sees the formatted agreement on `/agreements/[id]`, and the row exists in Supabase. Edit and delete also persist. All screens handle loading/empty/error. Works without login.
 
 ---
 
-## Sprint 3 — Status workflow and clause library
-**Goal:** Agreements move through states; standard clauses are reusable.
+## Sprint 2 — PDF Export & Polish
+**Goal:** Agent can download the agreement as a print-ready PDF.
 
-- [ ] Status transition buttons: Draft → Ready → Signed
-- [ ] `/clauses` — list + add + edit + delete standard clauses
-- [ ] Attach clauses to agreement in builder form
-- [ ] Clauses render in agreement document in sort order
-- [ ] Audit log entry on every status change
+- [ ] GET `/api/agreements/[id]/pdf` — server renders PDF from `generated_text`
+- [ ] "Download PDF" button on preview page
+- [ ] PDF includes all party names, ID numbers, property, rent, dates, agent reference number
+- [ ] Consistent print layout (margins, headings, signature lines)
+- [ ] Reference number auto-generated (TA-YYYY-NNN) on creation
 
-**Definition of Done:** Agent marks agreement Signed; clause appears in printed document.
+**Definition of Done:** Clicking Download PDF returns a valid, populated PDF file in < 5 seconds for any agreement.
 
 ---
 
-## Sprint 4 — Lock it down (auth + per-agent isolation)
-**Goal:** Each agent's data is private; app is safe for real agreements.
+## Sprint 3 — Reusable Profiles
+**Goal:** Agent picks from saved landlord / tenant / property records instead of retyping.
+
+- [ ] `/landlords` CRUD (list, new, edit, delete)
+- [ ] `/tenants` CRUD (list, new, edit, delete)
+- [ ] `/properties` CRUD (list, new, edit, delete)
+- [ ] New-agreement form: dropdown to select existing profile OR enter new inline
+- [ ] Agreement record linked to profile IDs; profile changes do NOT retroactively alter saved agreement text
+
+**Definition of Done:** Agent creates a second agreement for the same tenant in under 60 seconds by picking from the dropdown.
+
+---
+
+## Sprint 4 — AI Clause Suggestions
+**Goal:** AI drafts 3 special conditions; agent accepts or rejects each before they enter the agreement.
+
+- [ ] Server-side `draft_clauses` function calls OpenAI (key in env only)
+- [ ] Triggered after agreement is saved; stores results in `agreement_clauses`
+- [ ] Preview page shows suggestions with Accept / Edit / Reject controls
+- [ ] Accepting a clause updates `review_status = 'accepted'` and appends to `generated_text`
+- [ ] Rejecting sets `review_status = 'rejected'`; clause never appears in agreement
+- [ ] AI entirely optional — agreement works fully if call fails or is disabled
+
+**Definition of Done:** An accepted clause appears in the agreement preview and in the downloaded PDF. A rejected clause does not. App behaves identically if the AI call throws an error.
+
+---
+
+## Sprint 5 — Lock It Down (Auth + Per-Agent Isolation)
+**Goal:** Each agent sees only their own agreements; PII is protected.
 
 - [ ] Supabase Auth: email/password sign-up and login pages
-- [ ] Populate `user_id` on all new rows
-- [ ] Replace open RLS policies with `auth.uid() = user_id` owner-scoped policies
-- [ ] Redirect unauthenticated users to `/login`
-- [ ] Protect all API/server routes with session check
+- [ ] All new writes set `user_id = auth.uid()`
+- [ ] Replace all `_v1_` RLS policies with `auth.uid() = user_id`
+- [ ] Redirect unauthenticated requests to `/login` (only added in this sprint)
+- [ ] Smoke test: agent A cannot query agent B's agreements, landlords, tenants, properties
+- [ ] Session management: sign-out clears session
 
-**Definition of Done:** Agent A cannot see Agent B's agreements.
-
----
-
-## Sprint 5 — AI clause suggestions
-**Goal:** AI drafts optional special conditions; agent reviews before saving.
-
-- [ ] Server-side API route: `POST /api/suggest-clauses` calls OpenAI, returns suggestion JSON
-- [ ] Store in `ai_special_conditions` + `source` + `confidence` + `review_status`
-- [ ] UI: "Suggest clauses" button in agreement form; renders draft with confidence badge
-- [ ] Accept / Edit / Reject controls; accepted text copies to `special_conditions`
-- [ ] Low-confidence (<0.6) drafts shown with warning banner
-
-**Definition of Done:** AI suggestion appears in form; only accepted text saved to agreement.
+**Definition of Done:** Two test accounts each see only their own data. Supabase RLS blocks cross-agent reads at the DB layer (verified with direct SQL query as each user).
 
 ---
 
 ## Gantt (sprint → feature)
 ```
-Sprint 1  |  DB schema · seed data · landlord/tenant/property CRUD
-Sprint 2  |  Agreement builder · detail page · PDF export  ← v1 functional
-Sprint 3  |  Status workflow · clause library · audit log
-Sprint 4  |  Auth · per-agent RLS · route protection
-Sprint 5  |  AI clause suggestions · confidence scoring
+Sprint 1  |██████ DB + Form + Generate + Preview + Edit/Delete
+Sprint 2  |████ PDF export + reference numbers
+Sprint 3  |████ Saved profiles + form pre-fill
+Sprint 4  |████ AI clause suggestions
+Sprint 5  |████ Auth + RLS lock-down
 ```

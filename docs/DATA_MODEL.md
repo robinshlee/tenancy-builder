@@ -1,66 +1,78 @@
-# Data Model — Tenancy Builder
+# Data Model
 
 ## landlords
 | Field | Type | Notes |
 |---|---|---|
 | id | uuid PK | |
-| user_id | uuid | nullable; owner-scoped at lock-down |
-| full_name | text | |
-| id_number | text | national ID / passport |
-| email | text | |
+| user_id | uuid nullable | owner scope at lock-down |
+| full_name | text NOT NULL | |
+| id_number | text NOT NULL | national ID / passport |
 | phone | text | |
+| email | text | |
 | address | text | |
 | created_at | timestamptz | |
 
 ## tenants
-Same shape as landlords plus `current_address text`.
+| Field | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| user_id | uuid nullable | |
+| full_name | text NOT NULL | |
+| id_number | text NOT NULL | |
+| phone | text | |
+| email | text | |
+| current_address | text | |
+| created_at | timestamptz | |
 
 ## properties
-| Field | Type |
-|---|---|
-| id | uuid PK |
-| user_id | uuid |
-| address | text |
-| unit_number | text |
-| city | text |
-| property_type | text |
-| bedrooms | integer |
-| description | text |
+| Field | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| user_id | uuid nullable | |
+| address | text NOT NULL | |
+| suburb | text | |
+| city | text | |
+| postal_code | text | |
+| property_type | text | Apartment / House / Commercial |
+| bedrooms | integer | |
+| description | text | |
+| created_at | timestamptz | |
 
 ## agreements
 | Field | Type | Notes |
 |---|---|---|
 | id | uuid PK | |
-| user_id | uuid | |
-| property_id | uuid FK → properties | |
-| monthly_rental | numeric(12,2) | |
+| user_id | uuid nullable | |
+| reference_number | text NOT NULL | e.g. TA-2025-001 |
+| property_id | uuid → properties | |
+| rental_amount | numeric(12,2) NOT NULL | |
 | deposit_amount | numeric(12,2) | |
-| payment_due_day | integer | 1–28 |
-| lease_start | date | |
-| lease_end | date | |
-| status | text | draft / ready / signed |
-| special_conditions | text | agent-written |
-| ai_special_conditions | text | **AI field** |
-| ai_special_conditions_source | text | model + prompt version |
-| ai_special_conditions_confidence | numeric | 0–1 |
-| ai_special_conditions_review_status | text | unreviewed / accepted / rejected |
+| lease_start_date | date NOT NULL | |
+| lease_end_date | date NOT NULL | |
+| payment_due_day | integer default 1 | day of month rent is due |
+| special_conditions | text | agent free-text additions |
+| generated_text | text | full assembled agreement copy |
+| status | text default 'draft' | draft / active / signed / expired |
+| created_at | timestamptz | |
 
-## agreement_parties
-| Field | Type |
-|---|---|
-| agreement_id | uuid FK → agreements |
-| party_type | text (landlord/tenant) |
-| landlord_id | uuid FK → landlords (nullable) |
-| tenant_id | uuid FK → tenants (nullable) |
+## agreement_landlords (junction)
+`agreement_id → agreements`, `landlord_id → landlords` — supports multiple landlords per agreement.
 
-## clauses
-`id, user_id, title text, body text, is_standard boolean`
+## agreement_tenants (junction)
+`agreement_id → agreements`, `tenant_id → tenants` — supports multiple tenants per agreement.
 
-## agreement_clauses
-`id, agreement_id FK, clause_id FK, sort_order integer`
-
-## audit_logs
-`id, user_id, action text, object_type text, object_id uuid, payload jsonb, created_at`
+## agreement_clauses (AI-generated)
+| Field | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| user_id | uuid nullable | |
+| agreement_id | uuid → agreements | |
+| clause_text | text NOT NULL | the suggested clause |
+| clause_text_source | text | e.g. 'openai/gpt-4o' |
+| clause_text_confidence | numeric | 0–1 |
+| clause_text_review_status | text default 'unreviewed' | unreviewed / accepted / rejected |
+| accepted | boolean default false | |
+| created_at | timestamptz | |
 
 ## RLS
-All tables: open v1 policies (select/all = true). Lock-down sprint replaces with `auth.uid() = user_id`.
+All tables: permissive v1 policies (select + all) so the demo runs without login. Lock-down sprint replaces with `auth.uid() = user_id`.

@@ -1,31 +1,29 @@
-# Architecture — Tenancy Builder
+# Architecture
 
 ## Stack
-- **Frontend:** Next.js 14 (App Router)
-- **Database & Auth:** Supabase (Postgres + RLS)
-- **Hosting:** Vercel
-- **PDF:** Browser print stylesheet (`@media print`) + optional `react-pdf` for server-side export
+- **Frontend:** Next.js 14 (App Router) on Vercel
+- **Database + API:** Supabase (Postgres + RLS + Storage)
+- **PDF:** React-PDF or Puppeteer server-side route
+- **AI (later):** OpenAI via server-side API route only
 
-## Now vs Later
-| Now (v1) | Later |
-|---|---|
-| Landlord / Tenant / Property CRUD | Auth + per-agent RLS |
-| Agreement builder & PDF output | AI clause suggestions |
-| Standard clause library | Digital signature integration |
-| Demo seed data, no login wall | Renewal reminders |
+## What to Build Now vs Later
+**Now:** form → DB record → generate text → preview → PDF download → list/edit/delete
+**Later:** saved profiles, AI clause suggestions, auth, e-signature, email send
 
-## Key Action Flow — "Generate Agreement"
-1. **Enter** — agent fills agreement form (parties, property, amounts, dates)
-2. **Validate** — client checks required fields; shows inline errors
-3. **Persist** — `agreements` row + `agreement_parties` rows written to Supabase
-4. **Render** — agreement detail page fetches and displays all fields in document layout
-5. **Export** — agent clicks Print / Download PDF; browser generates file
-6. **Update** — agent sets status to Ready or Signed via status button
+## Key User Action — Step by Step
+1. Agent opens `/agreements/new` (no login required)
+2. Fills form; client validates required fields
+3. On submit: POST to `/api/agreements` server route
+4. Server assembles agreement text from inputs, saves `agreements` row + junction rows
+5. Server returns the new `agreement.id`
+6. Browser redirects to `/agreements/[id]` — fetches record from Supabase and renders preview
+7. Agent clicks Download PDF → `/api/agreements/[id]/pdf` renders and streams the file
+8. Agreement appears in `/agreements` list via Supabase query
 
 ## Layer Plan
-1. **Data first** — tables, seed data, open RLS policies
-2. **App logic** — CRUD forms, agreement builder, PDF layout
-3. **Smart features** — AI clause drafting, confidence scoring (post-v1)
+1. **Data first** — tables, constraints, RLS policies, seed data
+2. **App logic** — form, server routes, agreement text assembly (runs without AI)
+3. **Smart features** — AI clause drafting added on top; disabling it leaves the core intact
 
-## Resilience
-The agreement builder reads and writes plain Postgres rows. If the AI layer is unavailable, agents continue working — AI suggestions are optional overlays, never blockers.
+## Why the Core Runs Without AI
+Agreement text is assembled from structured DB fields by a plain TypeScript template function. No LLM call is in the critical path. AI only proposes optional special conditions the agent can accept, edit, or ignore.

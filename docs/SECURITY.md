@@ -1,17 +1,29 @@
-# Security — Tenancy Builder
+# Security
 
 ## Secret Handling
-- Supabase service-role key: server-side only (`SUPABASE_SERVICE_ROLE_KEY` in Vercel env, never in client bundle)
-- Supabase anon key: public, safe for client reads under RLS
-- OpenAI key (later): server-side API route only
+- Supabase service-role key and OpenAI key stored only in Vercel environment variables
+- Never referenced in any client-side file or `NEXT_PUBLIC_` variable
+- All AI calls made from `/api` server routes; browser receives only the result
 
-## Permission Model
-- **v1:** open RLS — all rows readable/writable by anyone (demo mode; no real tenant data yet)
-- **Lock-down sprint:** `auth.uid() = user_id` policies on all tables; only the creating agent sees their own records
-- Agent permissions inherit from the logged-in Supabase session; no elevated service-role calls from the browser
+## Permission Model (v1 — demo phase)
+- All tables have permissive RLS (select + all with `using (true)`) so the app is demoable without login
+- This is intentional and temporary — clearly documented for lock-down sprint
+
+## Permission Model (lock-down sprint)
+- Supabase Auth added; `user_id` set to `auth.uid()` on all new writes
+- All permissive policies replaced with `auth.uid() = user_id`
+- Seeded demo rows remain readable (user_id = null excluded or handled by a public-demo flag)
 
 ## Approved Tools Rule
-Only named, scoped functions (see AGENTIC_LAYER.md) are called from the app. No `run_any` / `exec` / raw SQL from the frontend. All DB mutations go through typed Supabase client calls.
+- Agentic actions use only the named tools listed in `AGENTIC_LAYER.md`
+- No `eval`, no `run_any`, no dynamic SQL construction from user input
+- All DB writes go through Supabase typed client with parameterised queries
 
 ## Audit Principle
-Every agreement create, update, delete, and status change writes a row to `audit_logs` with the actor's `user_id`, the object affected, and a before/after payload snapshot. Logs are append-only (no delete policy on `audit_logs`).
+- Every agreement create / update / delete writes an audit entry
+- Audit rows are insert-only (no update/delete policy on audit table)
+- Agent cannot delete their own audit trail
+
+## Stop Points
+- If e-signature or payment integration is added: get a human security review before shipping
+- If personally identifiable data (national ID numbers) is exported to third-party services: legal review required

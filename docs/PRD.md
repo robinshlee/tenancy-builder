@@ -1,34 +1,40 @@
-# PRD — Tenancy Builder
+# Tenancy Builder — Product Requirements
 
 ## Problem
-Preparing a tenancy agreement for each secured rental is a manual, error-prone process that takes an agent hours. Details (landlord, tenant, property, rent, dates, clauses) are scattered across notes and templates.
+Every time a letting agent secures a rental, they must produce a tenancy agreement from scratch — copying names, ID numbers, property details, rent, and dates into a document template. It takes hours and is error-prone.
 
 ## Target User
-Letting agent working independently or in a small agency.
+A letting agent (solo or small team) who handles multiple rentals and needs to produce a clean, legally complete tenancy agreement fast.
 
 ## Core Objects
-- **Landlord** — name, ID number, contact details
-- **Tenant** — name, ID number, contact details
-- **Property** — address, type, bedrooms
-- **Agreement** — links landlord(s) + tenant(s) + property; stores rental amount, deposit, payment day, lease dates, special conditions, status
-- **Clause** — reusable standard or custom clause text
+| Object | Purpose |
+|---|---|
+| Landlord | Named party who owns the property |
+| Tenant | Named party who will occupy |
+| Property | The rental unit being let |
+| Agreement | The generated tenancy document tying them together |
+| Agreement Clause | AI-drafted special conditions attached to an agreement |
 
-## MVP Checklist (v1)
-- [ ] Add / edit / delete landlords
-- [ ] Add / edit / delete tenants
-- [ ] Add / edit / delete properties
-- [ ] Create agreement: select landlord(s), tenant(s), property; enter rental, deposit, dates, special conditions
-- [ ] Agreement detail page renders a clean, print-ready document
-- [ ] Download / print agreement as PDF
-- [ ] Agreement list with status badges (Draft / Ready / Signed)
-- [ ] App loads with demo data — no login required in v1
+## MVP Must-Haves (v1)
+- [ ] One form: enter landlord(s), tenant(s), property, rent, deposit, dates, payment day
+- [ ] Submit → agreement record persisted to database
+- [ ] Formatted agreement text generated server-side and stored
+- [ ] On-screen preview of the full agreement
+- [ ] Download agreement as PDF
+- [ ] Agreements list page (newest first)
+- [ ] Edit and delete any agreement
+- [ ] Empty, loading, and error states on every screen
+- [ ] 3 demo agreements visible on first load (no login needed)
 
 ## Non-Goals (v1)
-- Multi-tenant SaaS / agency-wide accounts
-- Digital signatures
-- Automated email delivery
-- AI clause suggestions (later sprint)
-- Auth / per-agent data isolation (later sprint)
+- User accounts / login
+- E-signatures
+- Email delivery
+- Renewal reminders
+- Multi-agent teams
+- Custom clause library / template editor
 
 ## Success Criteria
-An agent opens the app, selects an existing landlord, tenant, and property, fills in rent and dates, clicks **Generate Agreement**, and within 2 minutes has a formatted, print-ready tenancy document — no template editing, no copy-pasting.
+**Scenario:** Agent opens the app, clicks "New Agreement", fills in landlord Margaret Osei (ID: GHA-8821045-3), tenant James Boateng (ID: GHA-9900112-7), property 14 Cantonments Road, rent GHS 3,500, deposit GHS 7,000, lease 1 Feb 2025 – 31 Jan 2026, payment due day 1. Clicks Generate. Within 10 seconds a complete, correctly populated tenancy agreement is visible on-screen and downloadable as a PDF. The record appears in the agreements list after generation.
+
+**Definition of Done:** The agreement preview contains every entered field, the PDF downloads without error, the record is in the database, and all this works without a login.
