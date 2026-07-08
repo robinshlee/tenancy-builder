@@ -7,9 +7,18 @@ export function Nav() {
         <Link href="/agreements" className="font-semibold tracking-tight text-lg">
           Tenancy Builder
         </Link>
-        <nav className="flex gap-4 text-sm">
+        <nav className="flex items-center gap-4 text-sm">
           <Link href="/agreements" className="text-neutral-600 hover:text-neutral-900">
             Agreements
+          </Link>
+          <Link href="/landlords" className="text-neutral-600 hover:text-neutral-900">
+            Landlords
+          </Link>
+          <Link href="/tenants" className="text-neutral-600 hover:text-neutral-900">
+            Tenants
+          </Link>
+          <Link href="/properties" className="text-neutral-600 hover:text-neutral-900">
+            Properties
           </Link>
           <Link
             href="/agreements/new"

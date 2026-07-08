@@ -2,9 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { PartyInput } from "@/lib/agreements/types";
+
+type PartyInput = {
+  id?: string;
+  full_name: string;
+  id_number: string;
+  phone: string;
+  email: string;
+  address: string;
+};
 
 type PropertyInput = {
+  id?: string;
   address: string;
   suburb: string;
   city: string;
@@ -12,6 +21,35 @@ type PropertyInput = {
   property_type: string;
   bedrooms: string;
   description: string;
+};
+
+export type ExistingLandlord = {
+  id: string;
+  full_name: string;
+  id_number: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+};
+
+export type ExistingTenant = {
+  id: string;
+  full_name: string;
+  id_number: string;
+  phone: string | null;
+  email: string | null;
+  current_address: string | null;
+};
+
+export type ExistingProperty = {
+  id: string;
+  address: string;
+  suburb: string | null;
+  city: string | null;
+  postal_code: string | null;
+  property_type: string | null;
+  bedrooms: number | null;
+  description: string | null;
 };
 
 export type AgreementFormValues = {
@@ -44,14 +82,18 @@ function PartyFields({
   title,
   kind,
   parties,
+  existingOptions,
   onChange,
+  onSelectExisting,
   onAdd,
   onRemove,
 }: {
   title: string;
   kind: "landlords" | "tenants";
   parties: PartyInput[];
+  existingOptions: (ExistingLandlord | ExistingTenant)[];
   onChange: (index: number, field: keyof PartyInput, value: string) => void;
+  onSelectExisting: (index: number, id: string) => void;
   onAdd: () => void;
   onRemove: (index: number) => void;
 }) {
@@ -59,7 +101,7 @@ function PartyFields({
     <fieldset className="space-y-4">
       <legend className="font-semibold text-neutral-900">{title}</legend>
       {parties.map((party, i) => (
-        <div key={i} className="grid grid-cols-2 gap-3 p-4 border border-neutral-200 rounded-md relative">
+        <div key={i} className="p-4 border border-neutral-200 rounded-md relative space-y-3">
           {parties.length > 1 && (
             <button
               type="button"
@@ -69,53 +111,80 @@ function PartyFields({
               Remove
             </button>
           )}
-          <label className="col-span-1 text-sm">
-            Full name *
-            <input
-              data-testid={`${kind}-${i}-full_name`}
-              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
-              value={party.full_name}
-              onChange={(e) => onChange(i, "full_name", e.target.value)}
-              required
-            />
-          </label>
-          <label className="col-span-1 text-sm">
-            ID number *
-            <input
-              data-testid={`${kind}-${i}-id_number`}
-              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
-              value={party.id_number}
-              onChange={(e) => onChange(i, "id_number", e.target.value)}
-              required
-            />
-          </label>
-          <label className="col-span-1 text-sm">
-            Phone
-            <input
-              data-testid={`${kind}-${i}-phone`}
-              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
-              value={party.phone}
-              onChange={(e) => onChange(i, "phone", e.target.value)}
-            />
-          </label>
-          <label className="col-span-1 text-sm">
-            Email
-            <input
-              data-testid={`${kind}-${i}-email`}
-              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
-              value={party.email}
-              onChange={(e) => onChange(i, "email", e.target.value)}
-            />
-          </label>
-          <label className="col-span-2 text-sm">
-            Address
-            <input
-              data-testid={`${kind}-${i}-address`}
-              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
-              value={party.address}
-              onChange={(e) => onChange(i, "address", e.target.value)}
-            />
-          </label>
+
+          {existingOptions.length > 0 && (
+            <label className="block text-sm">
+              Use existing {title.toLowerCase().replace(/s$/, "")}
+              <select
+                data-testid={`${kind}-${i}-existing`}
+                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
+                value={party.id ?? ""}
+                onChange={(e) => onSelectExisting(i, e.target.value)}
+              >
+                <option value="">+ Enter new {title.toLowerCase().replace(/s$/, "")}</option>
+                {existingOptions.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.full_name} ({opt.id_number})
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <label className="col-span-1 text-sm">
+              Full name *
+              <input
+                data-testid={`${kind}-${i}-full_name`}
+                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                value={party.full_name}
+                onChange={(e) => onChange(i, "full_name", e.target.value)}
+                disabled={!!party.id}
+                required
+              />
+            </label>
+            <label className="col-span-1 text-sm">
+              ID number *
+              <input
+                data-testid={`${kind}-${i}-id_number`}
+                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                value={party.id_number}
+                onChange={(e) => onChange(i, "id_number", e.target.value)}
+                disabled={!!party.id}
+                required
+              />
+            </label>
+            <label className="col-span-1 text-sm">
+              Phone
+              <input
+                data-testid={`${kind}-${i}-phone`}
+                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                value={party.phone}
+                onChange={(e) => onChange(i, "phone", e.target.value)}
+                disabled={!!party.id}
+              />
+            </label>
+            <label className="col-span-1 text-sm">
+              Email
+              <input
+                data-testid={`${kind}-${i}-email`}
+                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                value={party.email}
+                onChange={(e) => onChange(i, "email", e.target.value)}
+                disabled={!!party.id}
+              />
+            </label>
+            <label className="col-span-2 text-sm">
+              Address
+              <input
+                data-testid={`${kind}-${i}-address`}
+                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                value={party.address}
+                onChange={(e) => onChange(i, "address", e.target.value)}
+                disabled={!!party.id}
+              />
+            </label>
+          </div>
         </div>
       ))}
       <button type="button" onClick={onAdd} className="text-sm text-neutral-700 hover:underline">
@@ -129,10 +198,16 @@ export function AgreementForm({
   mode,
   agreementId,
   initialValues,
+  existingLandlords = [],
+  existingTenants = [],
+  existingProperties = [],
 }: {
   mode: "create" | "edit";
   agreementId?: string;
   initialValues: AgreementFormValues;
+  existingLandlords?: ExistingLandlord[];
+  existingTenants?: ExistingTenant[];
+  existingProperties?: ExistingProperty[];
 }) {
   const router = useRouter();
   const [values, setValues] = useState<AgreementFormValues>(initialValues);
@@ -145,6 +220,76 @@ export function AgreementForm({
       const next = [...v[kind]];
       next[index] = { ...next[index], [field]: value };
       return { ...v, [kind]: next };
+    });
+  }
+
+  function selectExistingLandlord(index: number, id: string) {
+    setValues((v) => {
+      const next = [...v.landlords];
+      if (!id) {
+        next[index] = { ...emptyParty };
+      } else {
+        const found = existingLandlords.find((l) => l.id === id);
+        if (found) {
+          next[index] = {
+            id: found.id,
+            full_name: found.full_name,
+            id_number: found.id_number,
+            phone: found.phone ?? "",
+            email: found.email ?? "",
+            address: found.address ?? "",
+          };
+        }
+      }
+      return { ...v, landlords: next };
+    });
+  }
+
+  function selectExistingTenant(index: number, id: string) {
+    setValues((v) => {
+      const next = [...v.tenants];
+      if (!id) {
+        next[index] = { ...emptyParty };
+      } else {
+        const found = existingTenants.find((t) => t.id === id);
+        if (found) {
+          next[index] = {
+            id: found.id,
+            full_name: found.full_name,
+            id_number: found.id_number,
+            phone: found.phone ?? "",
+            email: found.email ?? "",
+            address: found.current_address ?? "",
+          };
+        }
+      }
+      return { ...v, tenants: next };
+    });
+  }
+
+  function selectExistingProperty(id: string) {
+    setValues((v) => {
+      if (!id) {
+        return {
+          ...v,
+          property: { address: "", suburb: "", city: "", postal_code: "", property_type: "", bedrooms: "", description: "" },
+        };
+      }
+      const found = existingProperties.find((p) => p.id === id);
+      if (!found) return v;
+      return {
+        ...v,
+        property: {
+          id: found.id,
+          address: found.address,
+          suburb: found.suburb ?? "",
+          city: found.city ?? "",
+          postal_code: found.postal_code ?? "",
+          property_type: found.property_type ?? "",
+          bedrooms: found.bedrooms != null ? String(found.bedrooms) : "",
+          description: found.description ?? "",
+        },
+      };
     });
   }
 
@@ -190,6 +335,7 @@ export function AgreementForm({
       landlords: values.landlords.map((l) => ({ ...l })),
       tenants: values.tenants.map((t) => ({ ...t })),
       property: {
+        id: values.property.id,
         address: values.property.address,
         suburb: values.property.suburb || undefined,
         city: values.property.city || undefined,
@@ -248,7 +394,9 @@ export function AgreementForm({
         title="Landlords"
         kind="landlords"
         parties={values.landlords}
+        existingOptions={existingLandlords}
         onChange={(i, f, v) => updateParty("landlords", i, f, v)}
+        onSelectExisting={selectExistingLandlord}
         onAdd={() => addParty("landlords")}
         onRemove={(i) => removeParty("landlords", i)}
       />
@@ -257,80 +405,110 @@ export function AgreementForm({
         title="Tenants"
         kind="tenants"
         parties={values.tenants}
+        existingOptions={existingTenants}
         onChange={(i, f, v) => updateParty("tenants", i, f, v)}
+        onSelectExisting={selectExistingTenant}
         onAdd={() => addParty("tenants")}
         onRemove={(i) => removeParty("tenants", i)}
       />
 
       <fieldset className="space-y-4">
         <legend className="font-semibold text-neutral-900">Property</legend>
-        <div className="grid grid-cols-2 gap-3 p-4 border border-neutral-200 rounded-md">
-          <label className="col-span-2 text-sm">
-            Address *
-            <input
-              data-testid="property-address"
-              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
-              value={values.property.address}
-              onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, address: e.target.value } }))}
-              required
-            />
-          </label>
-          <label className="text-sm">
-            Suburb
-            <input
-              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
-              value={values.property.suburb}
-              onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, suburb: e.target.value } }))}
-            />
-          </label>
-          <label className="text-sm">
-            City
-            <input
-              data-testid="property-city"
-              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
-              value={values.property.city}
-              onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, city: e.target.value } }))}
-            />
-          </label>
-          <label className="text-sm">
-            Postal code
-            <input
-              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
-              value={values.property.postal_code}
-              onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, postal_code: e.target.value } }))}
-            />
-          </label>
-          <label className="text-sm">
-            Property type
-            <select
-              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
-              value={values.property.property_type}
-              onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, property_type: e.target.value } }))}
-            >
-              <option value="">Select…</option>
-              <option value="Apartment">Apartment</option>
-              <option value="House">House</option>
-              <option value="Commercial">Commercial</option>
-            </select>
-          </label>
-          <label className="text-sm">
-            Bedrooms
-            <input
-              type="number"
-              min={0}
-              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
-              value={values.property.bedrooms}
-              onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, bedrooms: e.target.value } }))}
-            />
-          </label>
-          <label className="col-span-2 text-sm">
-            Description
-            <textarea
-              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
-              value={values.property.description}
-              onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, description: e.target.value } }))}
-            />
-          </label>
+        <div className="p-4 border border-neutral-200 rounded-md space-y-3">
+          {existingProperties.length > 0 && (
+            <label className="block text-sm">
+              Use existing property
+              <select
+                data-testid="property-existing"
+                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
+                value={values.property.id ?? ""}
+                onChange={(e) => selectExistingProperty(e.target.value)}
+              >
+                <option value="">+ Enter new property</option>
+                {existingProperties.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.address}
+                    {p.city ? `, ${p.city}` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <label className="col-span-2 text-sm">
+              Address *
+              <input
+                data-testid="property-address"
+                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                value={values.property.address}
+                onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, address: e.target.value } }))}
+                disabled={!!values.property.id}
+                required
+              />
+            </label>
+            <label className="text-sm">
+              Suburb
+              <input
+                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                value={values.property.suburb}
+                onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, suburb: e.target.value } }))}
+                disabled={!!values.property.id}
+              />
+            </label>
+            <label className="text-sm">
+              City
+              <input
+                data-testid="property-city"
+                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                value={values.property.city}
+                onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, city: e.target.value } }))}
+                disabled={!!values.property.id}
+              />
+            </label>
+            <label className="text-sm">
+              Postal code
+              <input
+                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                value={values.property.postal_code}
+                onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, postal_code: e.target.value } }))}
+                disabled={!!values.property.id}
+              />
+            </label>
+            <label className="text-sm">
+              Property type
+              <select
+                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                value={values.property.property_type}
+                onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, property_type: e.target.value } }))}
+                disabled={!!values.property.id}
+              >
+                <option value="">Select…</option>
+                <option value="Apartment">Apartment</option>
+                <option value="House">House</option>
+                <option value="Commercial">Commercial</option>
+              </select>
+            </label>
+            <label className="text-sm">
+              Bedrooms
+              <input
+                type="number"
+                min={0}
+                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                value={values.property.bedrooms}
+                onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, bedrooms: e.target.value } }))}
+                disabled={!!values.property.id}
+              />
+            </label>
+            <label className="col-span-2 text-sm">
+              Description
+              <textarea
+                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                value={values.property.description}
+                onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, description: e.target.value } }))}
+                disabled={!!values.property.id}
+              />
+            </label>
+          </div>
         </div>
       </fieldset>
 

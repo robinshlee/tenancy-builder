@@ -61,6 +61,7 @@ export type AgreementFull = Agreement & {
 };
 
 export type PartyInput = {
+  id?: string;
   full_name: string;
   id_number: string;
   phone?: string;
@@ -68,18 +69,21 @@ export type PartyInput = {
   address?: string;
 };
 
+export type PropertyInputData = {
+  id?: string;
+  address: string;
+  suburb?: string;
+  city?: string;
+  postal_code?: string;
+  property_type?: string;
+  bedrooms?: number;
+  description?: string;
+};
+
 export type AgreementFormInput = {
   landlords: PartyInput[];
   tenants: PartyInput[];
-  property: {
-    address: string;
-    suburb?: string;
-    city?: string;
-    postal_code?: string;
-    property_type?: string;
-    bedrooms?: number;
-    description?: string;
-  };
+  property: PropertyInputData;
   rental_amount: number;
   deposit_amount?: number;
   lease_start_date: string;

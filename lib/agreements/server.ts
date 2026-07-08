@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { generateAgreementText } from "./text";
-import type { AgreementFormInput, AgreementFull } from "./types";
+import { appendAcceptedClauses, generateAgreementText } from "./text";
+import type { AgreementFormInput, AgreementFull, PartyInput } from "./types";
 
 export async function generateReferenceNumber(supabase: SupabaseClient): Promise<string> {
   const year = new Date().getFullYear();
@@ -23,56 +23,92 @@ export async function generateReferenceNumber(supabase: SupabaseClient): Promise
   return `${prefix}${String(next).padStart(3, "0")}`;
 }
 
-export async function createAgreement(supabase: SupabaseClient, input: AgreementFormInput) {
-  const { data: property, error: propError } = await supabase
+async function resolveLandlords(supabase: SupabaseClient, landlords: PartyInput[]) {
+  const resolved: { id: string; full_name: string; id_number: string; address: string | null }[] = [];
+  for (const l of landlords) {
+    if (l.id) {
+      const { data, error } = await supabase.from("landlords").select().eq("id", l.id).single();
+      if (error) throw error;
+      resolved.push(data);
+    } else {
+      const { data, error } = await supabase
+        .from("landlords")
+        .insert({
+          full_name: l.full_name,
+          id_number: l.id_number,
+          phone: l.phone || null,
+          email: l.email || null,
+          address: l.address || null,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      resolved.push(data);
+    }
+  }
+  return resolved;
+}
+
+async function resolveTenants(supabase: SupabaseClient, tenants: PartyInput[]) {
+  const resolved: { id: string; full_name: string; id_number: string; current_address: string | null }[] = [];
+  for (const t of tenants) {
+    if (t.id) {
+      const { data, error } = await supabase.from("tenants").select().eq("id", t.id).single();
+      if (error) throw error;
+      resolved.push(data);
+    } else {
+      const { data, error } = await supabase
+        .from("tenants")
+        .insert({
+          full_name: t.full_name,
+          id_number: t.id_number,
+          phone: t.phone || null,
+          email: t.email || null,
+          current_address: t.address || null,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      resolved.push(data);
+    }
+  }
+  return resolved;
+}
+
+async function resolveProperty(supabase: SupabaseClient, property: AgreementFormInput["property"]) {
+  if (property.id) {
+    const { data, error } = await supabase.from("properties").select().eq("id", property.id).single();
+    if (error) throw error;
+    return data;
+  }
+  const { data, error } = await supabase
     .from("properties")
     .insert({
-      address: input.property.address,
-      suburb: input.property.suburb || null,
-      city: input.property.city || null,
-      postal_code: input.property.postal_code || null,
-      property_type: input.property.property_type || null,
-      bedrooms: input.property.bedrooms ?? null,
-      description: input.property.description || null,
+      address: property.address,
+      suburb: property.suburb || null,
+      city: property.city || null,
+      postal_code: property.postal_code || null,
+      property_type: property.property_type || null,
+      bedrooms: property.bedrooms ?? null,
+      description: property.description || null,
     })
     .select()
     .single();
-  if (propError) throw propError;
+  if (error) throw error;
+  return data;
+}
 
-  const { data: landlords, error: landlordError } = await supabase
-    .from("landlords")
-    .insert(
-      input.landlords.map((l) => ({
-        full_name: l.full_name,
-        id_number: l.id_number,
-        phone: l.phone || null,
-        email: l.email || null,
-        address: l.address || null,
-      })),
-    )
-    .select();
-  if (landlordError) throw landlordError;
-
-  const { data: tenants, error: tenantError } = await supabase
-    .from("tenants")
-    .insert(
-      input.tenants.map((t) => ({
-        full_name: t.full_name,
-        id_number: t.id_number,
-        phone: t.phone || null,
-        email: t.email || null,
-        current_address: t.address || null,
-      })),
-    )
-    .select();
-  if (tenantError) throw tenantError;
+export async function createAgreement(supabase: SupabaseClient, input: AgreementFormInput) {
+  const property = await resolveProperty(supabase, input.property);
+  const landlords = await resolveLandlords(supabase, input.landlords);
+  const tenants = await resolveTenants(supabase, input.tenants);
 
   const referenceNumber = await generateReferenceNumber(supabase);
 
   const generatedText = generateAgreementText({
     reference_number: referenceNumber,
-    landlords: landlords!,
-    tenants: tenants!.map((t) => ({ full_name: t.full_name, id_number: t.id_number, current_address: t.current_address })),
+    landlords,
+    tenants: tenants.map((t) => ({ full_name: t.full_name, id_number: t.id_number, current_address: t.current_address })),
     property,
     rental_amount: input.rental_amount,
     deposit_amount: input.deposit_amount,
@@ -102,12 +138,12 @@ export async function createAgreement(supabase: SupabaseClient, input: Agreement
 
   const { error: alError } = await supabase
     .from("agreement_landlords")
-    .insert(landlords!.map((l) => ({ agreement_id: agreement.id, landlord_id: l.id })));
+    .insert(landlords.map((l) => ({ agreement_id: agreement.id, landlord_id: l.id })));
   if (alError) throw alError;
 
   const { error: atError } = await supabase
     .from("agreement_tenants")
-    .insert(tenants!.map((t) => ({ agreement_id: agreement.id, tenant_id: t.id })));
+    .insert(tenants.map((t) => ({ agreement_id: agreement.id, tenant_id: t.id })));
   if (atError) throw atError;
 
   return agreement;
@@ -157,117 +193,31 @@ export async function updateAgreement(supabase: SupabaseClient, id: string, inpu
   const existing = await getAgreementFull(supabase, id);
   if (!existing) throw new Error("Agreement not found");
 
-  const { error: propError } = await supabase
-    .from("properties")
-    .update({
-      address: input.property.address,
-      suburb: input.property.suburb || null,
-      city: input.property.city || null,
-      postal_code: input.property.postal_code || null,
-      property_type: input.property.property_type || null,
-      bedrooms: input.property.bedrooms ?? null,
-      description: input.property.description || null,
-    })
-    .eq("id", existing.property.id);
-  if (propError) throw propError;
+  const property = await resolveProperty(supabase, input.property);
+  const landlords = await resolveLandlords(supabase, input.landlords);
+  const tenants = await resolveTenants(supabase, input.tenants);
 
-  for (let i = 0; i < input.landlords.length; i++) {
-    const l = input.landlords[i];
-    const existingLandlord = existing.landlords[i];
-    if (existingLandlord) {
-      const { error } = await supabase
-        .from("landlords")
-        .update({
-          full_name: l.full_name,
-          id_number: l.id_number,
-          phone: l.phone || null,
-          email: l.email || null,
-          address: l.address || null,
-        })
-        .eq("id", existingLandlord.id);
-      if (error) throw error;
-    } else {
-      const { data: newLandlord, error } = await supabase
-        .from("landlords")
-        .insert({
-          full_name: l.full_name,
-          id_number: l.id_number,
-          phone: l.phone || null,
-          email: l.email || null,
-          address: l.address || null,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      const { error: linkError } = await supabase
-        .from("agreement_landlords")
-        .insert({ agreement_id: id, landlord_id: newLandlord.id });
-      if (linkError) throw linkError;
-    }
-  }
-
-  for (let i = 0; i < input.tenants.length; i++) {
-    const t = input.tenants[i];
-    const existingTenant = existing.tenants[i];
-    if (existingTenant) {
-      const { error } = await supabase
-        .from("tenants")
-        .update({
-          full_name: t.full_name,
-          id_number: t.id_number,
-          phone: t.phone || null,
-          email: t.email || null,
-          current_address: t.address || null,
-        })
-        .eq("id", existingTenant.id);
-      if (error) throw error;
-    } else {
-      const { data: newTenant, error } = await supabase
-        .from("tenants")
-        .insert({
-          full_name: t.full_name,
-          id_number: t.id_number,
-          phone: t.phone || null,
-          email: t.email || null,
-          current_address: t.address || null,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      const { error: linkError } = await supabase
-        .from("agreement_tenants")
-        .insert({ agreement_id: id, tenant_id: newTenant.id });
-      if (linkError) throw linkError;
-    }
-  }
-
-  const { data: refreshedProperty, error: refreshedPropError } = await supabase
-    .from("properties")
-    .select()
-    .eq("id", existing.property.id)
-    .single();
-  if (refreshedPropError) throw refreshedPropError;
-
-  const { data: landlordLinks } = await supabase
+  const { error: deleteLlError } = await supabase.from("agreement_landlords").delete().eq("agreement_id", id);
+  if (deleteLlError) throw deleteLlError;
+  const { error: alError } = await supabase
     .from("agreement_landlords")
-    .select("landlords(*)")
-    .eq("agreement_id", id);
-  const { data: tenantLinks } = await supabase
+    .insert(landlords.map((l) => ({ agreement_id: id, landlord_id: l.id })));
+  if (alError) throw alError;
+
+  const { error: deleteTlError } = await supabase.from("agreement_tenants").delete().eq("agreement_id", id);
+  if (deleteTlError) throw deleteTlError;
+  const { error: atError } = await supabase
     .from("agreement_tenants")
-    .select("tenants(*)")
-    .eq("agreement_id", id);
+    .insert(tenants.map((t) => ({ agreement_id: id, tenant_id: t.id })));
+  if (atError) throw atError;
 
   const acceptedClauses = existing.clauses.filter((c) => c.clause_text_review_status === "accepted").map((c) => c.clause_text);
 
   const generatedText = generateAgreementText({
     reference_number: existing.reference_number,
-    landlords: (landlordLinks ?? []).map((l: any) => l.landlords),
-    tenants: (tenantLinks ?? []).map((t: any) => ({
-      full_name: t.tenants.full_name,
-      id_number: t.tenants.id_number,
-      current_address: t.tenants.current_address,
-    })),
-    property: refreshedProperty,
+    landlords,
+    tenants: tenants.map((t) => ({ full_name: t.full_name, id_number: t.id_number, current_address: t.current_address })),
+    property,
     rental_amount: input.rental_amount,
     deposit_amount: input.deposit_amount,
     lease_start_date: input.lease_start_date,
@@ -276,12 +226,12 @@ export async function updateAgreement(supabase: SupabaseClient, id: string, inpu
     special_conditions: input.special_conditions,
   });
 
-  const { appendAcceptedClauses } = await import("./text");
   const finalText = appendAcceptedClauses(generatedText, acceptedClauses);
 
   const { data: agreement, error: agreementError } = await supabase
     .from("agreements")
     .update({
+      property_id: property.id,
       rental_amount: input.rental_amount,
       deposit_amount: input.deposit_amount ?? null,
       lease_start_date: input.lease_start_date,
