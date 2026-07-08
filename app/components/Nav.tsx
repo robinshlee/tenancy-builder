@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SignOutButton } from "@/app/components/SignOutButton";
 
 export function Nav() {
   return (
@@ -26,6 +27,7 @@ export function Nav() {
           >
             New Agreement
           </Link>
+          <SignOutButton />
         </nav>
       </div>
     </header>
