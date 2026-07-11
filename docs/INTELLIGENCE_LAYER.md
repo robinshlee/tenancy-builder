@@ -1,46 +1,38 @@
-# Intelligence Layer
+# Intelligence Layer — Tenancy Builder
 
 ## Messy Input → Structured Data
-Agent types free-form party names, IDs, and conditions. The form enforces structure before saving:
+Agents currently paste free-text landlord/tenant details from WhatsApp or email. v1 accepts clean form inputs. Later: paste raw text → auto-parse into structured fields.
 
+## Auto-Structure Schema (parsed party block)
 ```json
 {
-  "agreement_id": "d4000000-...",
-  "landlords": [{"full_name": "Margaret Osei", "id_number": "GHA-8821045-3"}],
-  "tenants": [{"full_name": "James Boateng", "id_number": "GHA-9900112-7"}],
-  "property": {"address": "14 Cantonments Road", "city": "Accra"},
-  "rental_amount": 3500.00,
-  "lease_start_date": "2025-02-01",
-  "lease_end_date": "2026-01-31",
-  "payment_due_day": 1
+  "full_name": "Margaret Osei",
+  "identity_number": "GHA-19741203-00112",
+  "email": "margaret.osei@email.com",
+  "phone": "+233244000001",
+  "source": "paste_parse_v1",
+  "confidence": 0.91,
+  "review_status": "unreviewed"
 }
 ```
 
 ## Events to Track
-- Agreement created
-- Agreement previewed
+- Agreement generated (duration, parties count, rent amount)
+- Field edited after auto-parse (signals low-confidence extraction)
 - PDF downloaded
-- Clause suggested (AI)
-- Clause accepted / rejected
+- Agreement finalised
 
 ## Scoring Rules (rule-based first)
-| Check | Flag |
+| Signal | Score adjustment |
 |---|---|
-| lease_end < lease_start | Error — block submit |
-| deposit < rental_amount | Warning — unusually low deposit |
-| duration > 24 months | Info — confirm long lease |
-| ID number format invalid | Warning |
+| All mandatory fields present | +1.0 |
+| Identity number matches expected format | +0.2 |
+| End date > start date | +0.1 |
+| Special conditions left blank | flag for review |
 
-These rules run in the server route before saving. No AI needed.
-
-## AI: Special Condition Drafting (later)
-- Trigger: agreement saved
-- Input: property_type, lease duration, rental_amount, agent's free-text notes
-- Output: 3 suggested special conditions stored in `agreement_clauses` with `source`, `confidence`, `review_status = 'unreviewed'`
-- Agent sees suggestions in preview with Accept / Edit / Reject buttons
-- Accepted clauses are appended to `generated_text`
+## What Gets Ranked
+- Extraction confidence per parsed field (highlight low-confidence fields for manual check)
 
 ## v1 vs Later
-- **v1:** rule-based validation only; no AI calls
-- **Next:** AI clause suggestions (server-side, key never in browser)
-- **Later:** AI risk scoring per agreement; clause library trained on past agreements
+**v1:** deterministic template assembly; no AI in the critical path. 
+**Later:** GPT-assisted clause drafting; auto-parse pasted contact blocks; jurisdiction-aware clause suggestions stored with `source`, `confidence`, `review_status`.
