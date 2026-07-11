@@ -37,11 +37,11 @@ export function DownloadPdfButton({ id, referenceNumber }: { id: string; referen
       <button
         onClick={handleDownload}
         disabled={downloading}
-        className="text-sm border border-neutral-300 px-3 py-1.5 rounded-md hover:bg-neutral-100 disabled:opacity-50"
+        className="text-sm border border-white/15 text-slate-200 px-3 py-1.5 rounded-md hover:bg-white/5 disabled:opacity-50"
       >
         {downloading ? "Preparing…" : "Download PDF"}
       </button>
-      {error && <span className="text-xs text-red-600">{error}</span>}
+      {error && <span className="text-xs text-red-400">{error}</span>}
     </div>
   );
 }

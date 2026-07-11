@@ -17,7 +17,7 @@ export default async function AdminTemplatePage() {
     <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Agreement Template</h1>
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-slate-400">
           Branding, cover page reference, and schedule defaults used across every generated agreement. Each
           agreement&apos;s cover page and schedule are still generated from that agreement&apos;s own property,
           party, and deal details — schedule terms just start from your defaults below and can be edited per

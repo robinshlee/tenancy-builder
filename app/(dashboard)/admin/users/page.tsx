@@ -20,20 +20,20 @@ export default async function AdminUsersPage() {
     <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-slate-400">
           Promote a self-signed-up account to admin, or demote an admin back to a regular agent.
         </p>
       </div>
 
-      <ul className="divide-y divide-neutral-200 border border-neutral-200 rounded-lg bg-white">
+      <ul className="divide-y divide-white/10 border border-white/10 rounded-lg bg-navy-900/40">
         {profiles.map((p) => (
           <li key={p.user_id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-5 py-4">
             <div className="min-w-0">
               <p className="font-medium truncate">{p.email ?? p.user_id}</p>
-              <p className="text-sm text-neutral-500 capitalize">{p.role}</p>
+              <p className="text-sm text-slate-400 capitalize">{p.role}</p>
             </div>
             {p.user_id === me?.id ? (
-              <span className="text-xs text-neutral-400">This is you</span>
+              <span className="text-xs text-slate-500">This is you</span>
             ) : (
               <RoleToggleButton userId={p.user_id} currentRole={p.role} />
             )}

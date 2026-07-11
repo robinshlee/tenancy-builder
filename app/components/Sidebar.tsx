@@ -6,17 +6,84 @@ import { usePathname } from "next/navigation";
 import { SignOutButton } from "@/app/components/SignOutButton";
 
 const NAV_ITEMS = [
-  { href: "/agreements", label: "Agreements" },
-  { href: "/properties", label: "Properties" },
-  { href: "/property-groups", label: "Property Groups" },
-  { href: "/landlords", label: "Landlords" },
-  { href: "/tenants", label: "Tenants" },
-];
+  { href: "/agreements", label: "Agreements", icon: "document" },
+  { href: "/properties", label: "Properties", icon: "building" },
+  { href: "/property-groups", label: "Property Groups", icon: "layers" },
+  { href: "/landlords", label: "Landlords", icon: "user" },
+  { href: "/tenants", label: "Tenants", icon: "users" },
+] as const;
 
 const ADMIN_NAV_ITEMS = [
-  { href: "/admin/users", label: "User Management" },
-  { href: "/admin/template", label: "Agreement Template" },
-];
+  { href: "/admin/users", label: "User Management", icon: "shield" },
+  { href: "/admin/template", label: "Agreement Template", icon: "file" },
+] as const;
+
+type IconName = (typeof NAV_ITEMS)[number]["icon"] | (typeof ADMIN_NAV_ITEMS)[number]["icon"];
+
+function NavIcon({ name }: { name: IconName }) {
+  const common = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  switch (name) {
+    case "document":
+      return (
+        <svg {...common}>
+          <path d="M7 3h7l5 5v13H7z" />
+          <path d="M14 3v5h5" />
+          <line x1="9.5" y1="13" x2="14.5" y2="13" />
+          <line x1="9.5" y1="17" x2="14.5" y2="17" />
+        </svg>
+      );
+    case "building":
+      return (
+        <svg {...common}>
+          <rect x="4" y="3" width="10" height="18" />
+          <rect x="14" y="9" width="6" height="12" />
+          <line x1="7" y1="7" x2="7" y2="7.01" />
+          <line x1="11" y1="7" x2="11" y2="7.01" />
+          <line x1="7" y1="11" x2="7" y2="11.01" />
+          <line x1="11" y1="11" x2="11" y2="11.01" />
+          <line x1="7" y1="15" x2="7" y2="15.01" />
+          <line x1="11" y1="15" x2="11" y2="15.01" />
+        </svg>
+      );
+    case "layers":
+      return (
+        <svg {...common}>
+          <path d="M12 3 2 8l10 5 10-5-10-5Z" />
+          <path d="M2 13l10 5 10-5" />
+          <path d="M2 18l10 5 10-5" />
+        </svg>
+      );
+    case "user":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 20c0-3.9 3.6-7 8-7s8 3.1 8 7" />
+        </svg>
+      );
+    case "users":
+      return (
+        <svg {...common}>
+          <circle cx="9" cy="8" r="3.5" />
+          <path d="M2 20c0-3.3 3.1-6 7-6s7 2.7 7 6" />
+          <path d="M16 5.5a3 3 0 0 1 0 6" />
+          <path d="M22 20c0-2.8-2.2-5.1-5-5.7" />
+        </svg>
+      );
+    case "shield":
+      return (
+        <svg {...common}>
+          <path d="M12 3l8 3v6c0 4.5-3.2 7.9-8 9-4.8-1.1-8-4.5-8-9V6l8-3Z" />
+        </svg>
+      );
+    case "file":
+      return (
+        <svg {...common}>
+          <path d="M7 3h7l5 5v13H7z" />
+          <path d="M14 3v5h5" />
+        </svg>
+      );
+  }
+}
 
 function HamburgerIcon() {
   return (
@@ -49,10 +116,11 @@ function NavLinks({ isAdmin, onNavigate }: { isAdmin: boolean; onNavigate?: () =
             key={item.href}
             href={item.href}
             onClick={onNavigate}
-            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-              active ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+              active ? "bg-teal-500/15 text-teal-300 ring-1 ring-teal-400/30" : "text-slate-300 hover:bg-white/5 hover:text-white"
             }`}
           >
+            <NavIcon name={item.icon} />
             {item.label}
           </Link>
         );
@@ -73,15 +141,18 @@ export function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 md:w-64 md:border-r md:border-neutral-200 md:bg-white md:px-4 md:py-6 md:z-30">
-        <Link href="/agreements" className="font-semibold tracking-tight text-lg px-3 mb-6">
-          Tenancy Builder
+      <aside className="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 md:w-64 glass-panel md:border-r md:border-white/10 md:px-4 md:py-6 md:z-30">
+        <Link href="/agreements" className="flex items-center gap-2 px-3 mb-6">
+          <span className="w-7 h-7 rounded-md bg-teal-500/20 ring-1 ring-teal-400/40 flex items-center justify-center text-teal-300 text-sm font-bold">
+            T
+          </span>
+          <span className="font-semibold tracking-tight text-lg text-white">Tenancy Builder</span>
         </Link>
         <NavLinks isAdmin={isAdmin} />
-        <div className="mt-auto px-3 pt-6 border-t border-neutral-200 space-y-3">
+        <div className="mt-auto px-3 pt-6 border-t border-white/10 space-y-3">
           <Link
             href="/agreements/new"
-            className="block text-center bg-neutral-900 text-white px-3 py-2 rounded-md text-sm hover:bg-neutral-700"
+            className="block text-center bg-teal-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors"
           >
             + New Agreement
           </Link>
@@ -90,16 +161,14 @@ export function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="md:hidden sticky top-0 z-40 flex items-center justify-between border-b border-neutral-200 bg-white px-4 py-3">
-        <Link href="/agreements" className="font-semibold tracking-tight text-lg">
+      <header className="md:hidden sticky top-0 z-40 flex items-center justify-between glass-panel border-b border-white/10 px-4 py-3">
+        <Link href="/agreements" className="flex items-center gap-2 font-semibold tracking-tight text-lg text-white">
+          <span className="w-6 h-6 rounded-md bg-teal-500/20 ring-1 ring-teal-400/40 flex items-center justify-center text-teal-300 text-xs font-bold">
+            T
+          </span>
           Tenancy Builder
         </Link>
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          aria-label="Open menu"
-          className="p-2 -mr-2 text-neutral-700"
-        >
+        <button type="button" onClick={() => setOpen(true)} aria-label="Open menu" className="p-2 -mr-2 text-slate-300">
           <HamburgerIcon />
         </button>
       </header>
@@ -110,27 +179,22 @@ export function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
           <button
             type="button"
             aria-label="Close menu"
-            className="fixed inset-0 bg-black/40"
+            className="fixed inset-0 bg-black/60"
             onClick={() => setOpen(false)}
           />
-          <div className="relative w-64 max-w-[80%] bg-white h-full px-4 py-6 flex flex-col shadow-xl">
+          <div className="relative w-64 max-w-[80%] bg-navy-900 h-full px-4 py-6 flex flex-col shadow-2xl border-r border-white/10">
             <div className="flex items-center justify-between mb-6">
-              <span className="font-semibold tracking-tight text-lg">Tenancy Builder</span>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Close menu"
-                className="p-2 -mr-2 text-neutral-700"
-              >
+              <span className="font-semibold tracking-tight text-lg text-white">Tenancy Builder</span>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close menu" className="p-2 -mr-2 text-slate-300">
                 <CloseIcon />
               </button>
             </div>
             <NavLinks isAdmin={isAdmin} onNavigate={() => setOpen(false)} />
-            <div className="mt-auto pt-6 border-t border-neutral-200 space-y-3">
+            <div className="mt-auto pt-6 border-t border-white/10 space-y-3">
               <Link
                 href="/agreements/new"
                 onClick={() => setOpen(false)}
-                className="block text-center bg-neutral-900 text-white px-3 py-2 rounded-md text-sm hover:bg-neutral-700"
+                className="block text-center bg-teal-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors"
               >
                 + New Agreement
               </Link>

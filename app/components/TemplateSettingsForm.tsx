@@ -151,13 +151,13 @@ export function TemplateSettingsForm({ settings }: { settings: AppSettings }) {
   return (
     <div className="space-y-10">
       <section className="space-y-3">
-        <h2 className="font-semibold text-neutral-900">Logo / letterhead image</h2>
-        <p className="text-sm text-neutral-500">
+        <h2 className="font-semibold text-white">Logo / letterhead image</h2>
+        <p className="text-sm text-slate-400">
           Appears on the cover page of every generated agreement (preview and PDF).
         </p>
         {logoUrl && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={logoUrl} alt="Current logo" className="h-16 border border-neutral-200 rounded-md bg-white p-2" />
+          <img src={logoUrl} alt="Current logo" className="h-16 border border-white/15 rounded-md bg-navy-900/40 p-2" />
         )}
         <input
           ref={fileInputRef}
@@ -167,22 +167,22 @@ export function TemplateSettingsForm({ settings }: { settings: AppSettings }) {
           disabled={uploadingLogo}
           className="block text-sm"
         />
-        <p className="text-xs text-neutral-400">PNG, JPEG, or WebP — SVG isn&apos;t supported in the PDF renderer.</p>
-        {uploadingLogo && <p className="text-sm text-neutral-500">Uploading…</p>}
-        {logoError && <p className="text-sm text-red-600">{logoError}</p>}
+        <p className="text-xs text-slate-500">PNG, JPEG, or WebP — SVG isn&apos;t supported in the PDF renderer.</p>
+        {uploadingLogo && <p className="text-sm text-slate-400">Uploading…</p>}
+        {logoError && <p className="text-sm text-red-400">{logoError}</p>}
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-semibold text-neutral-900">Cover page</h2>
-        <p className="text-sm text-neutral-500">
+        <h2 className="font-semibold text-white">Cover page</h2>
+        <p className="text-sm text-slate-400">
           Every agreement&apos;s cover page and schedule are still generated automatically from that agreement&apos;s
           own data (see below). If you&apos;ve designed a custom cover page layout, use this guide to prepare it and
           upload it here as a reference — once uploaded, it&apos;s stored and available to view any time.
         </p>
 
-        <div className="rounded-md border border-neutral-200 bg-neutral-50 p-4 space-y-2">
-          <p className="text-sm font-medium text-neutral-800">How to prepare a cover page</p>
-          <ol className="text-sm text-neutral-600 list-decimal list-inside space-y-1">
+        <div className="rounded-md border border-white/10 bg-navy-900/40 p-4 space-y-2">
+          <p className="text-sm font-medium text-white">How to prepare a cover page</p>
+          <ol className="text-sm text-slate-300 list-decimal list-inside space-y-1">
             <li>Design your cover page in Word or as a PDF, using your own branding and layout.</li>
             <li>
               Anywhere you want agreement-specific data to appear, type the exact placeholder tokens below — the app
@@ -193,16 +193,16 @@ export function TemplateSettingsForm({ settings }: { settings: AppSettings }) {
           <div className="overflow-x-auto mt-2">
             <table className="text-xs w-full border-collapse">
               <thead>
-                <tr className="text-left text-neutral-500 border-b border-neutral-200">
+                <tr className="text-left text-slate-400 border-b border-white/10">
                   <th className="py-1 pr-4 font-medium">Placeholder</th>
                   <th className="py-1 font-medium">Fills in with</th>
                 </tr>
               </thead>
               <tbody>
                 {COVER_PAGE_TOKENS.map((t) => (
-                  <tr key={t.token} className="border-b border-neutral-100 last:border-0">
-                    <td className="py-1 pr-4 font-mono text-neutral-800">{t.token}</td>
-                    <td className="py-1 text-neutral-600">{t.description}</td>
+                  <tr key={t.token} className="border-b border-white/5 last:border-0">
+                    <td className="py-1 pr-4 font-mono text-white">{t.token}</td>
+                    <td className="py-1 text-slate-300">{t.description}</td>
                   </tr>
                 ))}
               </tbody>
@@ -211,16 +211,16 @@ export function TemplateSettingsForm({ settings }: { settings: AppSettings }) {
         </div>
 
         {coverPageUrl ? (
-          <div className="rounded-md border border-neutral-200 p-4 flex items-start justify-between gap-4">
+          <div className="rounded-md border border-white/10 p-4 flex items-start justify-between gap-4">
             <div className="text-sm">
-              <p className="font-medium text-neutral-900">{coverPageFilename}</p>
-              <p className="text-neutral-500">Uploaded {formatDate(coverPageUploadedAt)}</p>
-              <a href={coverPageUrl} target="_blank" rel="noreferrer" className="text-neutral-700 underline">
+              <p className="font-medium text-white">{coverPageFilename}</p>
+              <p className="text-slate-400">Uploaded {formatDate(coverPageUploadedAt)}</p>
+              <a href={coverPageUrl} target="_blank" rel="noreferrer" className="text-teal-300 hover:text-teal-200 underline">
                 View file
               </a>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <label className="text-sm text-neutral-700 hover:underline cursor-pointer">
+              <label className="text-sm text-teal-300 hover:text-teal-200 hover:underline cursor-pointer">
                 Replace
                 <input
                   ref={coverPageInputRef}
@@ -235,7 +235,7 @@ export function TemplateSettingsForm({ settings }: { settings: AppSettings }) {
                 type="button"
                 onClick={handleRemoveCoverPage}
                 disabled={uploadingCoverPage}
-                className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                className="text-xs text-red-400 hover:underline disabled:opacity-50"
               >
                 Remove
               </button>
@@ -243,7 +243,7 @@ export function TemplateSettingsForm({ settings }: { settings: AppSettings }) {
           </div>
         ) : (
           <div>
-            <label className="inline-block bg-neutral-900 text-white px-5 py-2.5 rounded-md text-sm hover:bg-neutral-700 cursor-pointer">
+            <label className="inline-block bg-teal-500 text-white px-5 py-2.5 rounded-md text-sm font-medium hover:bg-teal-400 cursor-pointer transition-colors">
               Upload cover page
               <input
                 ref={coverPageInputRef}
@@ -254,23 +254,23 @@ export function TemplateSettingsForm({ settings }: { settings: AppSettings }) {
                 className="hidden"
               />
             </label>
-            <p className="text-xs text-neutral-400 mt-2">PDF or Word (.pdf, .doc, .docx), up to 10MB.</p>
+            <p className="text-xs text-slate-500 mt-2">PDF or Word (.pdf, .doc, .docx), up to 10MB.</p>
           </div>
         )}
-        {uploadingCoverPage && <p className="text-sm text-neutral-500">Working…</p>}
-        {coverPageError && <p className="text-sm text-red-600">{coverPageError}</p>}
+        {uploadingCoverPage && <p className="text-sm text-slate-400">Working…</p>}
+        {coverPageError && <p className="text-sm text-red-400">{coverPageError}</p>}
       </section>
 
       <form onSubmit={handleSaveText} className="space-y-8">
-        {textError && <div className="rounded-md bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">{textError}</div>}
-        {textSaved && <div className="rounded-md bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm">Saved.</div>}
+        {textError && <div className="rounded-md bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 text-sm">{textError}</div>}
+        {textSaved && <div className="rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 px-4 py-3 text-sm">Saved.</div>}
 
         <div className="space-y-3">
-          <h2 className="font-semibold text-neutral-900">Letterhead &amp; additional notes</h2>
+          <h2 className="font-semibold text-white">Letterhead &amp; additional notes</h2>
           <label className="block text-sm">
             Letterhead name (shown next to the logo)
             <input
-              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
+              className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
               value={letterheadName}
               onChange={(e) => setLetterheadName(e.target.value)}
               placeholder="e.g. Acme Property Management"
@@ -279,7 +279,7 @@ export function TemplateSettingsForm({ settings }: { settings: AppSettings }) {
           <label className="block text-sm">
             Additional schedule notes (optional, appended after the standard lease terms below)
             <textarea
-              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 min-h-[120px]"
+              className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 min-h-[120px] bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
               value={boilerplate}
               onChange={(e) => setBoilerplate(e.target.value)}
               placeholder={"One note per line, e.g.\nNo pets without written consent."}
@@ -288,8 +288,8 @@ export function TemplateSettingsForm({ settings }: { settings: AppSettings }) {
         </div>
 
         <div className="space-y-3">
-          <h2 className="font-semibold text-neutral-900">Schedule defaults</h2>
-          <p className="text-sm text-neutral-500">
+          <h2 className="font-semibold text-white">Schedule defaults</h2>
+          <p className="text-sm text-slate-400">
             Standard lease terms used to pre-fill every new agreement&apos;s Schedule. Agents can still edit these
             per agreement.
           </p>
@@ -297,7 +297,7 @@ export function TemplateSettingsForm({ settings }: { settings: AppSettings }) {
             <label className="text-sm">
               Notice period
               <textarea
-                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 min-h-[60px]"
+                className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 min-h-[60px] bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
                 value={schedule.default_notice_period}
                 onChange={(e) => setSchedule((s) => ({ ...s, default_notice_period: e.target.value }))}
               />
@@ -305,7 +305,7 @@ export function TemplateSettingsForm({ settings }: { settings: AppSettings }) {
             <label className="text-sm">
               Renewal / termination terms
               <textarea
-                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 min-h-[60px]"
+                className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 min-h-[60px] bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
                 value={schedule.default_renewal_terms}
                 onChange={(e) => setSchedule((s) => ({ ...s, default_renewal_terms: e.target.value }))}
               />
@@ -313,7 +313,7 @@ export function TemplateSettingsForm({ settings }: { settings: AppSettings }) {
             <label className="text-sm">
               Maintenance &amp; repair responsibilities
               <textarea
-                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 min-h-[60px]"
+                className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 min-h-[60px] bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
                 value={schedule.default_maintenance_responsibility}
                 onChange={(e) => setSchedule((s) => ({ ...s, default_maintenance_responsibility: e.target.value }))}
               />
@@ -321,7 +321,7 @@ export function TemplateSettingsForm({ settings }: { settings: AppSettings }) {
             <label className="text-sm">
               Utilities responsibility
               <textarea
-                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 min-h-[60px]"
+                className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 min-h-[60px] bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
                 value={schedule.default_utilities_responsibility}
                 onChange={(e) => setSchedule((s) => ({ ...s, default_utilities_responsibility: e.target.value }))}
               />
@@ -329,7 +329,7 @@ export function TemplateSettingsForm({ settings }: { settings: AppSettings }) {
             <label className="text-sm">
               Inventory / condition notes
               <textarea
-                className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 min-h-[60px]"
+                className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 min-h-[60px] bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
                 value={schedule.default_inventory_notes}
                 onChange={(e) => setSchedule((s) => ({ ...s, default_inventory_notes: e.target.value }))}
               />
@@ -340,7 +340,7 @@ export function TemplateSettingsForm({ settings }: { settings: AppSettings }) {
         <button
           type="submit"
           disabled={savingText}
-          className="bg-neutral-900 text-white px-5 py-2.5 rounded-md text-sm hover:bg-neutral-700 disabled:opacity-50"
+          className="bg-teal-500 text-white px-5 py-2.5 rounded-md text-sm font-medium hover:bg-teal-400 disabled:opacity-50 transition-colors"
         >
           {savingText ? "Saving…" : "Save"}
         </button>

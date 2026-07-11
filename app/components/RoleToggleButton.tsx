@@ -37,11 +37,11 @@ export function RoleToggleButton({ userId, currentRole }: { userId: string; curr
       <button
         onClick={handleClick}
         disabled={submitting}
-        className="text-sm text-neutral-700 hover:underline disabled:opacity-50"
+        className="text-sm text-teal-300 hover:text-teal-200 hover:underline disabled:opacity-50"
       >
         {submitting ? "Saving…" : nextRole === "admin" ? "Promote to admin" : "Demote to agent"}
       </button>
-      {error && <span className="text-xs text-red-600">{error}</span>}
+      {error && <span className="text-xs text-red-400">{error}</span>}
     </span>
   );
 }

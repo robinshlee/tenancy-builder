@@ -53,26 +53,32 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <div className="rounded-md bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">{error}</div>}
-      {message && <div className="rounded-md bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm">{message}</div>}
+      {error && (
+        <div className="rounded-md bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 text-sm">{error}</div>
+      )}
+      {message && (
+        <div className="rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 px-4 py-3 text-sm">
+          {message}
+        </div>
+      )}
 
-      <label className="block text-sm">
+      <label className="block text-sm text-slate-300">
         Email
         <input
           type="email"
           data-testid="auth-email"
-          className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
+          className="mt-1 w-full rounded-md bg-white px-3 py-2.5 text-navy-950 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
       </label>
-      <label className="block text-sm">
+      <label className="block text-sm text-slate-300">
         Password
         <input
           type="password"
           data-testid="auth-password"
-          className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
+          className="mt-1 w-full rounded-md bg-white px-3 py-2.5 text-navy-950 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           minLength={6}
@@ -83,23 +89,23 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full bg-neutral-900 text-white px-5 py-2.5 rounded-md text-sm hover:bg-neutral-700 disabled:opacity-50"
+        className="w-full bg-teal-500 text-white px-5 py-2.5 rounded-md text-sm font-medium hover:bg-teal-400 disabled:opacity-50 transition-colors"
       >
         {submitting ? "Please wait…" : mode === "login" ? "Log in" : "Create account"}
       </button>
 
-      <p className="text-sm text-neutral-500 text-center">
+      <p className="text-sm text-slate-400 text-center">
         {mode === "login" ? (
           <>
             No account?{" "}
-            <Link href="/signup" className="text-neutral-900 underline">
+            <Link href="/signup" className="text-teal-300 hover:text-teal-200 underline">
               Sign up
             </Link>
           </>
         ) : (
           <>
             Already have an account?{" "}
-            <Link href="/login" className="text-neutral-900 underline">
+            <Link href="/login" className="text-teal-300 hover:text-teal-200 underline">
               Log in
             </Link>
           </>

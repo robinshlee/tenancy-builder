@@ -59,15 +59,15 @@ export function PropertyGroupForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div ref={errorRef} className="rounded-md bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+        <div ref={errorRef} className="rounded-md bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 text-sm">
           {error}
         </div>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 border border-neutral-200 rounded-md bg-white">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 border border-white/10 rounded-md bg-navy-900/40">
         <label className="col-span-2 text-sm">
           Name *
           <input
-            className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
+            className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
             value={values.name}
             onChange={(e) => setValues((v) => ({ ...v, name: e.target.value }))}
             placeholder="e.g. Marina Towers"
@@ -77,7 +77,7 @@ export function PropertyGroupForm({
         <label className="text-sm">
           Address
           <input
-            className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
+            className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
             value={values.address ?? ""}
             onChange={(e) => setValues((v) => ({ ...v, address: e.target.value }))}
           />
@@ -85,7 +85,7 @@ export function PropertyGroupForm({
         <label className="text-sm">
           City
           <input
-            className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
+            className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
             value={values.city ?? ""}
             onChange={(e) => setValues((v) => ({ ...v, city: e.target.value }))}
           />
@@ -94,7 +94,7 @@ export function PropertyGroupForm({
       <button
         type="submit"
         disabled={submitting}
-        className="bg-neutral-900 text-white px-5 py-2.5 rounded-md text-sm hover:bg-neutral-700 disabled:opacity-50"
+        className="bg-teal-500 text-white px-5 py-2.5 rounded-md text-sm font-medium hover:bg-teal-400 disabled:opacity-50 transition-colors"
       >
         {submitting ? "Saving…" : mode === "create" ? "Create Group" : "Save Changes"}
       </button>

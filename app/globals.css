@@ -1,1 +1,35 @@
 @import "tailwindcss";
+
+@theme {
+  --color-navy-950: #070f1f;
+  --color-navy-900: #0b1626;
+  --color-navy-850: #0f1d31;
+  --color-navy-800: #142238;
+  --color-navy-700: #1b2c46;
+  --color-navy-600: #253a58;
+  --color-teal-300: #5eead4;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+}
+
+body {
+  background-color: var(--color-navy-950);
+}
+
+/* Subtle glass-panel look reused across cards, sidebars, and modals. */
+.glass-panel {
+  background-color: color-mix(in srgb, var(--color-navy-900) 70%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+::selection {
+  background-color: var(--color-teal-500);
+  color: var(--color-navy-950);
+}
+
+/* Firefox + WebKit dark scrollbars so the chrome matches the theme. */
+* {
+  scrollbar-color: var(--color-navy-600) transparent;
+}

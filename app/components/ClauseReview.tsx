@@ -10,9 +10,9 @@ export type ClauseData = {
 };
 
 const statusStyles: Record<string, string> = {
-  unreviewed: "bg-amber-100 text-amber-800",
-  accepted: "bg-green-100 text-green-800",
-  rejected: "bg-red-100 text-red-700",
+  unreviewed: "bg-amber-500/15 text-amber-300",
+  accepted: "bg-emerald-500/15 text-emerald-300",
+  rejected: "bg-red-500/15 text-red-300",
 };
 
 function ClauseRow({ agreementId, clause }: { agreementId: string; clause: ClauseData }) {
@@ -46,10 +46,10 @@ function ClauseRow({ agreementId, clause }: { agreementId: string; clause: Claus
   }
 
   return (
-    <li className="border border-neutral-200 rounded-md p-3 text-sm bg-white space-y-2">
+    <li className="border border-white/10 rounded-md p-3 text-sm bg-navy-900/40 space-y-2 text-slate-100">
       {editing ? (
         <textarea
-          className="w-full border border-neutral-300 rounded-md px-3 py-2"
+          className="w-full border border-white/15 rounded-md px-3 py-2 bg-navy-800/60 text-white focus:outline-none focus:ring-2 focus:ring-teal-400/50"
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
@@ -67,11 +67,11 @@ function ClauseRow({ agreementId, clause }: { agreementId: string; clause: Claus
             <button
               disabled={submitting}
               onClick={() => act("accept", text)}
-              className="text-xs text-green-700 hover:underline disabled:opacity-50"
+              className="text-xs text-emerald-400 hover:underline disabled:opacity-50"
             >
               Save &amp; Accept
             </button>
-            <button onClick={() => setEditing(false)} className="text-xs text-neutral-500 hover:underline">
+            <button onClick={() => setEditing(false)} className="text-xs text-slate-400 hover:underline">
               Cancel
             </button>
           </>
@@ -81,26 +81,26 @@ function ClauseRow({ agreementId, clause }: { agreementId: string; clause: Claus
               <button
                 disabled={submitting}
                 onClick={() => act("accept")}
-                className="text-xs text-green-700 hover:underline disabled:opacity-50"
+                className="text-xs text-emerald-400 hover:underline disabled:opacity-50"
               >
                 Accept
               </button>
             )}
-            <button onClick={() => setEditing(true)} className="text-xs text-neutral-700 hover:underline">
+            <button onClick={() => setEditing(true)} className="text-xs text-slate-300 hover:underline">
               Edit
             </button>
             {clause.clause_text_review_status !== "rejected" && (
               <button
                 disabled={submitting}
                 onClick={() => act("reject")}
-                className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                className="text-xs text-red-400 hover:underline disabled:opacity-50"
               >
                 Reject
               </button>
             )}
           </>
         )}
-        {error && <span className="text-xs text-red-600">{error}</span>}
+        {error && <span className="text-xs text-red-400">{error}</span>}
       </div>
     </li>
   );

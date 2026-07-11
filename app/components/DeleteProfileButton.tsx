@@ -29,24 +29,24 @@ export function DeleteProfileButton({ apiPath, label = "this record" }: { apiPat
   if (confirming) {
     return (
       <span className="flex items-center gap-2 text-sm">
-        <span className="text-neutral-700">Delete {label}?</span>
+        <span className="text-slate-300">Delete {label}?</span>
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="text-red-600 font-medium hover:underline disabled:opacity-50"
+          className="text-red-400 font-medium hover:underline disabled:opacity-50"
         >
           {deleting ? "Deleting…" : "Confirm"}
         </button>
-        <button onClick={() => setConfirming(false)} className="text-neutral-500 hover:underline">
+        <button onClick={() => setConfirming(false)} className="text-slate-400 hover:underline">
           Cancel
         </button>
-        {error && <span className="text-red-600">{error}</span>}
+        {error && <span className="text-red-400">{error}</span>}
       </span>
     );
   }
 
   return (
-    <button onClick={() => setConfirming(true)} className="text-sm text-red-600 hover:underline">
+    <button onClick={() => setConfirming(true)} className="text-sm text-red-400 hover:underline">
       Delete
     </button>
   );
