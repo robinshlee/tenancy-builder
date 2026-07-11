@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { deleteAgreement, getAgreementFull, updateAgreement } from "@/lib/agreements/server";
+import { AgreementInputError, deleteAgreement, getAgreementFull, updateAgreement } from "@/lib/agreements/server";
 import { validateAgreementInputs } from "@/lib/agreements/validation";
 import type { AgreementFormInput } from "@/lib/agreements/types";
 
@@ -38,6 +38,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const agreement = await updateAgreement(supabase, id, body);
     return NextResponse.json({ agreement });
   } catch (err) {
+    if (err instanceof AgreementInputError) {
+      return NextResponse.json({ error: err.message }, { status: 422 });
+    }
     console.error(err);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }

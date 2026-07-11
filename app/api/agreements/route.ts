@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createAgreement, listAgreements, saveDraftedClauses } from "@/lib/agreements/server";
+import { AgreementInputError, createAgreement, listAgreements, saveDraftedClauses } from "@/lib/agreements/server";
 import { draftClauses } from "@/lib/agreements/clauses";
 import { validateAgreementInputs } from "@/lib/agreements/validation";
 import type { AgreementFormInput } from "@/lib/agreements/types";
@@ -49,6 +49,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ agreement }, { status: 201 });
   } catch (err) {
+    if (err instanceof AgreementInputError) {
+      return NextResponse.json({ error: err.message }, { status: 422 });
+    }
     console.error(err);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }

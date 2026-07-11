@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { PropertyProfileInput } from "@/lib/profiles/server";
 
@@ -12,28 +12,47 @@ type PropertyFormValues = {
   property_type: string;
   bedrooms: string;
   description: string;
+  landlord_id: string;
+  group_id: string;
 };
+
+export type ExistingLandlordOption = { id: string; full_name: string; id_number: string };
+export type ExistingGroupOption = { id: string; name: string };
 
 export function PropertyForm({
   mode,
   propertyId,
   initialValues,
+  existingLandlords,
+  existingGroups,
 }: {
   mode: "create" | "edit";
   propertyId?: string;
   initialValues: PropertyFormValues;
+  existingLandlords: ExistingLandlordOption[];
+  existingGroups: ExistingGroupOption[];
 }) {
   const router = useRouter();
   const [values, setValues] = useState(initialValues);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  function showError(message: string) {
+    setError(message);
+    requestAnimationFrame(() => errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
     if (!values.address.trim()) {
-      setError("Address is required.");
+      showError("Address is required.");
+      return;
+    }
+    if (!values.landlord_id) {
+      showError("Every property must have a landlord.");
       return;
     }
 
@@ -45,6 +64,8 @@ export function PropertyForm({
       property_type: values.property_type || undefined,
       bedrooms: values.bedrooms ? Number(values.bedrooms) : undefined,
       description: values.description || undefined,
+      landlord_id: values.landlord_id,
+      group_id: values.group_id || undefined,
     };
 
     setSubmitting(true);
@@ -58,21 +79,25 @@ export function PropertyForm({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(body.error || "Something went wrong. Please try again.");
+        showError(body.error || "Something went wrong. Please try again.");
         setSubmitting(false);
         return;
       }
       router.push("/properties");
       router.refresh();
     } catch {
-      setError("Something went wrong. Please try again.");
+      showError("Something went wrong. Please try again.");
       setSubmitting(false);
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <div className="rounded-md bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">{error}</div>}
+      {error && (
+        <div ref={errorRef} className="rounded-md bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+          {error}
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 border border-neutral-200 rounded-md bg-white">
         <label className="col-span-2 text-sm">
           Address *
@@ -82,6 +107,44 @@ export function PropertyForm({
             onChange={(e) => setValues((v) => ({ ...v, address: e.target.value }))}
             required
           />
+        </label>
+        <label className="text-sm">
+          Landlord *
+          <select
+            data-testid="property-landlord"
+            className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
+            value={values.landlord_id}
+            onChange={(e) => setValues((v) => ({ ...v, landlord_id: e.target.value }))}
+            required
+          >
+            <option value="">Select landlord…</option>
+            {existingLandlords.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.full_name} ({l.id_number})
+              </option>
+            ))}
+          </select>
+          {existingLandlords.length === 0 && (
+            <span className="block mt-1 text-xs text-neutral-500">
+              No landlords yet — <a href="/landlords/new" className="underline">add one first</a>.
+            </span>
+          )}
+        </label>
+        <label className="text-sm">
+          Property group
+          <select
+            data-testid="property-group"
+            className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
+            value={values.group_id}
+            onChange={(e) => setValues((v) => ({ ...v, group_id: e.target.value }))}
+          >
+            <option value="">No group</option>
+            {existingGroups.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="text-sm">
           Suburb

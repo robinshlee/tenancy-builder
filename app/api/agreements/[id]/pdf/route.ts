@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAgreementFull } from "@/lib/agreements/server";
 import { renderAgreementPdf } from "@/lib/agreements/pdf";
+import { getAppSettings } from "@/lib/admin/settings";
 
 export const runtime = "nodejs";
 
@@ -10,12 +11,16 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   try {
     const supabase = await createClient();
-    const agreement = await getAgreementFull(supabase, id);
+    const [agreement, settings] = await Promise.all([getAgreementFull(supabase, id), getAppSettings(supabase)]);
     if (!agreement) {
       return NextResponse.json({ error: "Agreement not found." }, { status: 404 });
     }
 
-    const pdfBuffer = await renderAgreementPdf(agreement);
+    const pdfBuffer = await renderAgreementPdf(agreement, {
+      logo_url: settings.logo_url,
+      letterhead_name: settings.letterhead_name,
+      boilerplate_clauses: settings.boilerplate_clauses,
+    });
 
     return new NextResponse(pdfBuffer as unknown as BodyInit, {
       status: 200,

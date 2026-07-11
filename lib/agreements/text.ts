@@ -27,6 +27,8 @@ export function generateAgreementText(params: {
   lease_end_date: string;
   payment_due_day: number;
   special_conditions?: string | null;
+  letterhead_name?: string | null;
+  boilerplate_clauses?: string | null;
 }): string {
   const {
     reference_number,
@@ -39,6 +41,8 @@ export function generateAgreementText(params: {
     lease_end_date,
     payment_due_day,
     special_conditions,
+    letterhead_name,
+    boilerplate_clauses,
   } = params;
 
   const propertyLine = [property.address, property.suburb, property.city].filter(Boolean).join(", ");
@@ -50,6 +54,10 @@ export function generateAgreementText(params: {
     .join("\n");
 
   const lines: string[] = [];
+  if (letterhead_name?.trim()) {
+    lines.push(letterhead_name.trim());
+    lines.push("");
+  }
   lines.push("TENANCY AGREEMENT");
   lines.push(`Reference: ${reference_number}`);
   lines.push("");
@@ -92,6 +100,19 @@ export function generateAgreementText(params: {
         .trim()
         .split("\n")
         .map((l) => `  - ${l}`)
+        .join("\n"),
+    );
+  }
+
+  if (boilerplate_clauses?.trim()) {
+    lines.push("");
+    lines.push("SCHEDULE:");
+    lines.push(
+      boilerplate_clauses
+        .trim()
+        .split("\n")
+        .filter((l) => l.trim())
+        .map((l) => `  - ${l.trim()}`)
         .join("\n"),
     );
   }

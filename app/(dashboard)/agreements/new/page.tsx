@@ -1,13 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
-import { listLandlords, listProperties, listTenants } from "@/lib/profiles/server";
+import { listLandlords, listProperties, listPropertyGroups, listTenants } from "@/lib/profiles/server";
 import { AgreementForm, emptyFormValues } from "@/app/components/AgreementForm";
 
 export default async function NewAgreementPage() {
   const supabase = await createClient();
-  const [landlords, tenants, properties] = await Promise.all([
+  const [landlords, tenants, properties, propertyGroups] = await Promise.all([
     listLandlords(supabase),
     listTenants(supabase),
     listProperties(supabase),
+    listPropertyGroups(supabase),
   ]);
 
   return (
@@ -19,6 +20,7 @@ export default async function NewAgreementPage() {
         existingLandlords={landlords}
         existingTenants={tenants}
         existingProperties={properties}
+        existingPropertyGroups={propertyGroups}
       />
     </main>
   );

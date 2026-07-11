@@ -1,8 +1,17 @@
-import { Document, Page, Text, View, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
+import { Document, Page, Text, View, Image, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
 import type { AgreementFull } from "./types";
+
+export type PdfTemplateSettings = {
+  logo_url?: string | null;
+  letterhead_name?: string | null;
+  boilerplate_clauses?: string | null;
+};
 
 const styles = StyleSheet.create({
   page: { padding: 48, fontSize: 11, fontFamily: "Helvetica", lineHeight: 1.5, color: "#111111" },
+  letterhead: { flexDirection: "row", alignItems: "center", marginBottom: 16, gap: 10 },
+  logo: { width: 48, height: 48, objectFit: "contain" },
+  letterheadName: { fontSize: 13, fontWeight: 700 },
   title: { fontSize: 18, fontWeight: 700, marginBottom: 4 },
   reference: { fontSize: 10, color: "#555555", marginBottom: 20 },
   sectionHeading: { fontSize: 12, fontWeight: 700, marginTop: 16, marginBottom: 6 },
@@ -29,16 +38,27 @@ function ordinal(n: number): string {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
-function AgreementPdfDocument({ agreement }: { agreement: AgreementFull }) {
+function AgreementPdfDocument({ agreement, template }: { agreement: AgreementFull; template: PdfTemplateSettings }) {
   const propertyLine = [agreement.property.address, agreement.property.suburb, agreement.property.city]
     .filter(Boolean)
     .join(", ");
 
   const acceptedClauses = agreement.clauses.filter((c) => c.clause_text_review_status === "accepted");
+  const boilerplateLines = (template.boilerplate_clauses ?? "")
+    .trim()
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        {(template.logo_url || template.letterhead_name) && (
+          <View style={styles.letterhead}>
+            {template.logo_url && <Image src={template.logo_url} style={styles.logo} />}
+            {template.letterhead_name && <Text style={styles.letterheadName}>{template.letterhead_name}</Text>}
+          </View>
+        )}
         <Text style={styles.title}>TENANCY AGREEMENT</Text>
         <Text style={styles.reference}>Reference: {agreement.reference_number}</Text>
 
@@ -117,6 +137,17 @@ function AgreementPdfDocument({ agreement }: { agreement: AgreementFull }) {
           </>
         )}
 
+        {boilerplateLines.length > 0 && (
+          <>
+            <Text style={styles.sectionHeading}>SCHEDULE</Text>
+            {boilerplateLines.map((line, i) => (
+              <Text key={i} style={styles.indented}>
+                {line}
+              </Text>
+            ))}
+          </>
+        )}
+
         <Text style={styles.sectionHeading}>SIGNATURES</Text>
         {agreement.landlords.map((l) => (
           <View key={l.id} style={styles.signatureBlock}>
@@ -141,6 +172,6 @@ function AgreementPdfDocument({ agreement }: { agreement: AgreementFull }) {
   );
 }
 
-export async function renderAgreementPdf(agreement: AgreementFull): Promise<Buffer> {
-  return renderToBuffer(<AgreementPdfDocument agreement={agreement} />);
+export async function renderAgreementPdf(agreement: AgreementFull, template: PdfTemplateSettings = {}): Promise<Buffer> {
+  return renderToBuffer(<AgreementPdfDocument agreement={agreement} template={template} />);
 }

@@ -1,12 +1,16 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProperty } from "@/lib/profiles/server";
+import { getProperty, listLandlords, listPropertyGroups } from "@/lib/profiles/server";
 import { PropertyForm } from "@/app/components/PropertyForm";
 
 export default async function EditPropertyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
-  const property = await getProperty(supabase, id);
+  const [property, landlords, groups] = await Promise.all([
+    getProperty(supabase, id),
+    listLandlords(supabase),
+    listPropertyGroups(supabase),
+  ]);
   if (!property) notFound();
 
   return (
@@ -15,6 +19,8 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
       <PropertyForm
         mode="edit"
         propertyId={id}
+        existingLandlords={landlords}
+        existingGroups={groups}
         initialValues={{
           address: property.address,
           suburb: property.suburb ?? "",
@@ -23,6 +29,8 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
           property_type: property.property_type ?? "",
           bedrooms: property.bedrooms != null ? String(property.bedrooms) : "",
           description: property.description ?? "",
+          landlord_id: property.landlord_id ?? "",
+          group_id: property.group_id ?? "",
         }}
       />
     </main>

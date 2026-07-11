@@ -25,6 +25,16 @@ export type Property = {
   property_type: string | null;
   bedrooms: number | null;
   description: string | null;
+  landlord_id: string | null;
+  group_id: string | null;
+};
+
+export type PropertyGroup = {
+  id: string;
+  name: string;
+  address: string | null;
+  city: string | null;
+  created_at: string;
 };
 
 export type Agreement = {
@@ -78,12 +88,15 @@ export type PropertyInputData = {
   property_type?: string;
   bedrooms?: number;
   description?: string;
+  group_id?: string;
 };
 
 export type AgreementFormInput = {
-  landlords: PartyInput[];
-  tenants: PartyInput[];
   property: PropertyInputData;
+  // Only used when property.id is not set (i.e. a brand new property is being created
+  // inline). When an existing property is selected its landlord_id is authoritative.
+  landlord?: PartyInput;
+  tenants: PartyInput[];
   rental_amount: number;
   deposit_amount?: number;
   lease_start_date: string;

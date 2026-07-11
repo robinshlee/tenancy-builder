@@ -7,9 +7,15 @@ import { SignOutButton } from "@/app/components/SignOutButton";
 
 const NAV_ITEMS = [
   { href: "/agreements", label: "Agreements" },
+  { href: "/properties", label: "Properties" },
+  { href: "/property-groups", label: "Property Groups" },
   { href: "/landlords", label: "Landlords" },
   { href: "/tenants", label: "Tenants" },
-  { href: "/properties", label: "Properties" },
+];
+
+const ADMIN_NAV_ITEMS = [
+  { href: "/admin/users", label: "User Management" },
+  { href: "/admin/template", label: "Agreement Template" },
 ];
 
 function HamburgerIcon() {
@@ -31,11 +37,12 @@ function CloseIcon() {
   );
 }
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+function NavLinks({ isAdmin, onNavigate }: { isAdmin: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
+  const items = isAdmin ? [...NAV_ITEMS, ...ADMIN_NAV_ITEMS] : NAV_ITEMS;
   return (
     <nav className="flex flex-col gap-1">
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
           <Link
@@ -54,7 +61,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -70,7 +77,7 @@ export function Sidebar() {
         <Link href="/agreements" className="font-semibold tracking-tight text-lg px-3 mb-6">
           Tenancy Builder
         </Link>
-        <NavLinks />
+        <NavLinks isAdmin={isAdmin} />
         <div className="mt-auto px-3 pt-6 border-t border-neutral-200 space-y-3">
           <Link
             href="/agreements/new"
@@ -118,7 +125,7 @@ export function Sidebar() {
                 <CloseIcon />
               </button>
             </div>
-            <NavLinks onNavigate={() => setOpen(false)} />
+            <NavLinks isAdmin={isAdmin} onNavigate={() => setOpen(false)} />
             <div className="mt-auto pt-6 border-t border-neutral-200 space-y-3">
               <Link
                 href="/agreements/new"

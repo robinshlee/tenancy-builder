@@ -24,6 +24,14 @@ export type PropertyProfileInput = {
   property_type?: string;
   bedrooms?: number;
   description?: string;
+  landlord_id: string;
+  group_id?: string;
+};
+
+export type PropertyGroupInput = {
+  name: string;
+  address?: string;
+  city?: string;
 };
 
 async function listTable(supabase: SupabaseClient, table: string) {
@@ -45,11 +53,25 @@ async function deleteRow(supabase: SupabaseClient, table: string, id: string) {
 
 export const listLandlords = (supabase: SupabaseClient) => listTable(supabase, "landlords");
 export const listTenants = (supabase: SupabaseClient) => listTable(supabase, "tenants");
-export const listProperties = (supabase: SupabaseClient) => listTable(supabase, "properties");
+export const listPropertyGroups = (supabase: SupabaseClient) => listTable(supabase, "property_groups");
 
 export const getLandlord = (supabase: SupabaseClient, id: string) => getRow(supabase, "landlords", id);
 export const getTenant = (supabase: SupabaseClient, id: string) => getRow(supabase, "tenants", id);
 export const getProperty = (supabase: SupabaseClient, id: string) => getRow(supabase, "properties", id);
+export const getPropertyGroup = (supabase: SupabaseClient, id: string) => getRow(supabase, "property_groups", id);
+
+export async function listProperties(supabase: SupabaseClient) {
+  const { data, error } = await supabase
+    .from("properties")
+    .select("*, landlord:landlords(id, full_name, id_number), group:property_groups(id, name)")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((p: any) => ({
+    ...p,
+    landlord: Array.isArray(p.landlord) ? (p.landlord[0] ?? null) : (p.landlord ?? null),
+    group: Array.isArray(p.group) ? (p.group[0] ?? null) : (p.group ?? null),
+  }));
+}
 
 export async function createLandlord(supabase: SupabaseClient, input: LandlordProfileInput) {
   const { data, error } = await supabase
@@ -132,6 +154,8 @@ export async function createProperty(supabase: SupabaseClient, input: PropertyPr
       property_type: input.property_type || null,
       bedrooms: input.bedrooms ?? null,
       description: input.description || null,
+      landlord_id: input.landlord_id,
+      group_id: input.group_id || null,
     })
     .select()
     .single();
@@ -150,6 +174,8 @@ export async function updateProperty(supabase: SupabaseClient, id: string, input
       property_type: input.property_type || null,
       bedrooms: input.bedrooms ?? null,
       description: input.description || null,
+      landlord_id: input.landlord_id,
+      group_id: input.group_id || null,
     })
     .eq("id", id)
     .select()
@@ -159,3 +185,26 @@ export async function updateProperty(supabase: SupabaseClient, id: string, input
 }
 
 export const deleteProperty = (supabase: SupabaseClient, id: string) => deleteRow(supabase, "properties", id);
+
+export async function createPropertyGroup(supabase: SupabaseClient, input: PropertyGroupInput) {
+  const { data, error } = await supabase
+    .from("property_groups")
+    .insert({ name: input.name, address: input.address || null, city: input.city || null })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updatePropertyGroup(supabase: SupabaseClient, id: string, input: PropertyGroupInput) {
+  const { data, error } = await supabase
+    .from("property_groups")
+    .update({ name: input.name, address: input.address || null, city: input.city || null })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export const deletePropertyGroup = (supabase: SupabaseClient, id: string) => deleteRow(supabase, "property_groups", id);

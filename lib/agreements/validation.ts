@@ -17,17 +17,17 @@ export function validateAgreementInputs(
   const errors: ValidationIssue[] = [];
   const warnings: ValidationWarning[] = [];
 
-  if (!input.landlords || input.landlords.length === 0) {
-    errors.push({ field: "landlords", message: "At least one landlord is required." });
-  } else {
-    input.landlords.forEach((l, i) => {
-      if (!l.full_name?.trim()) errors.push({ field: `landlords.${i}.full_name`, message: "Landlord name is required." });
-      if (!l.id_number?.trim()) errors.push({ field: `landlords.${i}.id_number`, message: "Landlord ID number is required." });
-      else if (!ID_NUMBER_PATTERN.test(l.id_number.trim())) warnings.push({ field: `landlords.${i}.id_number`, message: "Landlord ID number format looks unusual." });
-      if (l.email?.trim() && !EMAIL_PATTERN.test(l.email.trim())) {
-        errors.push({ field: `landlords.${i}.email`, message: "Landlord email address is not valid." });
-      }
-    });
+  // A landlord is only supplied by the client when creating a brand new property inline.
+  // When an existing property is selected, its landlord_id is resolved server-side instead.
+  if (!input.property?.id) {
+    if (!input.landlord || !input.landlord.full_name?.trim() || !input.landlord.id_number?.trim()) {
+      errors.push({ field: "landlord", message: "Landlord name and ID number are required for a new property." });
+    } else if (!ID_NUMBER_PATTERN.test(input.landlord.id_number.trim())) {
+      warnings.push({ field: "landlord.id_number", message: "Landlord ID number format looks unusual." });
+    }
+    if (input.landlord?.email?.trim() && !EMAIL_PATTERN.test(input.landlord.email.trim())) {
+      errors.push({ field: "landlord.email", message: "Landlord email address is not valid." });
+    }
   }
 
   if (!input.tenants || input.tenants.length === 0) {
@@ -43,7 +43,9 @@ export function validateAgreementInputs(
     });
   }
 
-  if (!input.property?.address?.trim()) {
+  // When an existing property is selected, its address is authoritative server-side —
+  // the client only needs to supply an address when creating a brand new property.
+  if (!input.property?.id && !input.property?.address?.trim()) {
     errors.push({ field: "property.address", message: "Property address is required." });
   }
 

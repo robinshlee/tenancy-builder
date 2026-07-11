@@ -22,6 +22,7 @@ type PropertyInput = {
   property_type: string;
   bedrooms: string;
   description: string;
+  group_id: string;
 };
 
 export type ExistingLandlord = {
@@ -42,6 +43,13 @@ export type ExistingTenant = {
   current_address: string | null;
 };
 
+export type ExistingPropertyGroup = {
+  id: string;
+  name: string;
+  address: string | null;
+  city: string | null;
+};
+
 export type ExistingProperty = {
   id: string;
   address: string;
@@ -51,12 +59,15 @@ export type ExistingProperty = {
   property_type: string | null;
   bedrooms: number | null;
   description: string | null;
+  group_id: string | null;
+  landlord_id: string | null;
+  landlord: { id: string; full_name: string; id_number: string } | null;
 };
 
 export type AgreementFormValues = {
-  landlords: PartyInput[];
-  tenants: PartyInput[];
   property: PropertyInput;
+  landlord: PartyInput;
+  tenants: PartyInput[];
   rental_amount: string;
   deposit_amount: string;
   lease_start_date: string;
@@ -66,11 +77,21 @@ export type AgreementFormValues = {
 };
 
 const emptyParty: PartyInput = { full_name: "", id_number: "", phone: "", email: "", address: "" };
+const emptyProperty: PropertyInput = {
+  address: "",
+  suburb: "",
+  city: "",
+  postal_code: "",
+  property_type: "",
+  bedrooms: "",
+  description: "",
+  group_id: "",
+};
 
 export const emptyFormValues: AgreementFormValues = {
-  landlords: [{ ...emptyParty }],
+  property: { ...emptyProperty },
+  landlord: { ...emptyParty },
   tenants: [{ ...emptyParty }],
-  property: { address: "", suburb: "", city: "", postal_code: "", property_type: "", bedrooms: "", description: "" },
   rental_amount: "",
   deposit_amount: "",
   lease_start_date: "",
@@ -203,6 +224,7 @@ export function AgreementForm({
   existingLandlords = [],
   existingTenants = [],
   existingProperties = [],
+  existingPropertyGroups = [],
 }: {
   mode: "create" | "edit";
   agreementId?: string;
@@ -210,6 +232,7 @@ export function AgreementForm({
   existingLandlords?: ExistingLandlord[];
   existingTenants?: ExistingTenant[];
   existingProperties?: ExistingProperty[];
+  existingPropertyGroups?: ExistingPropertyGroup[];
 }) {
   const router = useRouter();
   const [values, setValues] = useState<AgreementFormValues>(initialValues);
@@ -218,39 +241,43 @@ export function AgreementForm({
   const [submitting, setSubmitting] = useState(false);
   const errorRef = useRef<HTMLDivElement>(null);
 
+  const isExistingProperty = !!values.property.id;
+
   function showError(message: string) {
     setFormError(message);
     requestAnimationFrame(() => errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
   }
 
-  function updateParty(kind: "landlords" | "tenants", index: number, field: keyof PartyInput, value: string) {
+  function updateTenant(index: number, field: keyof PartyInput, value: string) {
     setValues((v) => {
-      const next = [...v[kind]];
+      const next = [...v.tenants];
       next[index] = { ...next[index], [field]: value };
-      return { ...v, [kind]: next };
+      return { ...v, tenants: next };
     });
   }
 
-  function selectExistingLandlord(index: number, id: string) {
-    setValues((v) => {
-      const next = [...v.landlords];
-      if (!id) {
-        next[index] = { ...emptyParty };
-      } else {
-        const found = existingLandlords.find((l) => l.id === id);
-        if (found) {
-          next[index] = {
-            id: found.id,
-            full_name: found.full_name,
-            id_number: found.id_number,
-            phone: found.phone ?? "",
-            email: found.email ?? "",
-            address: found.address ?? "",
-          };
-        }
-      }
-      return { ...v, landlords: next };
-    });
+  function updateLandlord(field: keyof PartyInput, value: string) {
+    setValues((v) => ({ ...v, landlord: { ...v.landlord, [field]: value } }));
+  }
+
+  function selectExistingLandlord(_index: number, id: string) {
+    if (!id) {
+      setValues((v) => ({ ...v, landlord: { ...emptyParty } }));
+      return;
+    }
+    const found = existingLandlords.find((l) => l.id === id);
+    if (!found) return;
+    setValues((v) => ({
+      ...v,
+      landlord: {
+        id: found.id,
+        full_name: found.full_name,
+        id_number: found.id_number,
+        phone: found.phone ?? "",
+        email: found.email ?? "",
+        address: found.address ?? "",
+      },
+    }));
   }
 
   function selectExistingTenant(index: number, id: string) {
@@ -278,10 +305,7 @@ export function AgreementForm({
   function selectExistingProperty(id: string) {
     setValues((v) => {
       if (!id) {
-        return {
-          ...v,
-          property: { address: "", suburb: "", city: "", postal_code: "", property_type: "", bedrooms: "", description: "" },
-        };
+        return { ...v, property: { ...emptyProperty }, landlord: { ...emptyParty } };
       }
       const found = existingProperties.find((p) => p.id === id);
       if (!found) return v;
@@ -296,20 +320,41 @@ export function AgreementForm({
           property_type: found.property_type ?? "",
           bedrooms: found.bedrooms != null ? String(found.bedrooms) : "",
           description: found.description ?? "",
+          group_id: found.group_id ?? "",
         },
+        // The property's landlord is fixed and shown read-only; it isn't user-editable here.
+        landlord: found.landlord
+          ? {
+              id: found.landlord.id,
+              full_name: found.landlord.full_name,
+              id_number: found.landlord.id_number,
+              phone: "",
+              email: "",
+              address: "",
+            }
+          : { ...emptyParty },
       };
     });
   }
 
-  function addParty(kind: "landlords" | "tenants") {
-    setValues((v) => ({ ...v, [kind]: [...v[kind], { ...emptyParty }] }));
+  function addTenant() {
+    setValues((v) => ({ ...v, tenants: [...v.tenants, { ...emptyParty }] }));
   }
 
-  function removeParty(kind: "landlords" | "tenants", index: number) {
-    setValues((v) => ({ ...v, [kind]: v[kind].filter((_, i) => i !== index) }));
+  function removeTenant(index: number) {
+    setValues((v) => ({ ...v, tenants: v.tenants.filter((_, i) => i !== index) }));
   }
 
   function clientValidate(): string | null {
+    if (!values.property.address.trim() && !values.property.id) return "Property address is required.";
+    if (!isExistingProperty) {
+      if (!values.landlord.full_name.trim() || !values.landlord.id_number.trim()) {
+        return "Landlord name and ID number are required for a new property.";
+      }
+      if (values.landlord.email.trim() && !EMAIL_PATTERN.test(values.landlord.email.trim())) {
+        return "The landlord email address is not valid.";
+      }
+    }
     if (values.lease_start_date && values.lease_end_date) {
       if (new Date(values.lease_end_date) < new Date(values.lease_start_date)) {
         return "Lease end date must be after the start date.";
@@ -318,15 +363,10 @@ export function AgreementForm({
     if (!values.rental_amount || Number.isNaN(Number(values.rental_amount)) || Number(values.rental_amount) <= 0) {
       return "Rental amount must be a positive number.";
     }
-    for (const l of values.landlords) {
-      if (!l.full_name.trim() || !l.id_number.trim()) return "Every landlord needs a name and ID number.";
-      if (l.email.trim() && !EMAIL_PATTERN.test(l.email.trim())) return "One of the landlord email addresses is not valid.";
-    }
     for (const t of values.tenants) {
       if (!t.full_name.trim() || !t.id_number.trim()) return "Every tenant needs a name and ID number.";
       if (t.email.trim() && !EMAIL_PATTERN.test(t.email.trim())) return "One of the tenant email addresses is not valid.";
     }
-    if (!values.property.address.trim()) return "Property address is required.";
     return null;
   }
 
@@ -342,8 +382,6 @@ export function AgreementForm({
     }
 
     const payload = {
-      landlords: values.landlords.map((l) => ({ ...l })),
-      tenants: values.tenants.map((t) => ({ ...t })),
       property: {
         id: values.property.id,
         address: values.property.address,
@@ -353,7 +391,10 @@ export function AgreementForm({
         property_type: values.property.property_type || undefined,
         bedrooms: values.property.bedrooms ? Number(values.property.bedrooms) : undefined,
         description: values.property.description || undefined,
+        group_id: values.property.group_id || undefined,
       },
+      landlord: isExistingProperty ? undefined : { ...values.landlord },
+      tenants: values.tenants.map((t) => ({ ...t })),
       rental_amount: Number(values.rental_amount),
       deposit_amount: values.deposit_amount ? Number(values.deposit_amount) : undefined,
       lease_start_date: values.lease_start_date,
@@ -402,28 +443,6 @@ export function AgreementForm({
         </div>
       )}
 
-      <PartyFields
-        title="Landlords"
-        kind="landlords"
-        parties={values.landlords}
-        existingOptions={existingLandlords}
-        onChange={(i, f, v) => updateParty("landlords", i, f, v)}
-        onSelectExisting={selectExistingLandlord}
-        onAdd={() => addParty("landlords")}
-        onRemove={(i) => removeParty("landlords", i)}
-      />
-
-      <PartyFields
-        title="Tenants"
-        kind="tenants"
-        parties={values.tenants}
-        existingOptions={existingTenants}
-        onChange={(i, f, v) => updateParty("tenants", i, f, v)}
-        onSelectExisting={selectExistingTenant}
-        onAdd={() => addParty("tenants")}
-        onRemove={(i) => removeParty("tenants", i)}
-      />
-
       <fieldset className="space-y-4">
         <legend className="font-semibold text-neutral-900">Property</legend>
         <div className="p-4 border border-neutral-200 rounded-md space-y-3">
@@ -454,7 +473,7 @@ export function AgreementForm({
                 className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
                 value={values.property.address}
                 onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, address: e.target.value } }))}
-                disabled={!!values.property.id}
+                disabled={isExistingProperty}
                 required
               />
             </label>
@@ -464,7 +483,7 @@ export function AgreementForm({
                 className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
                 value={values.property.suburb}
                 onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, suburb: e.target.value } }))}
-                disabled={!!values.property.id}
+                disabled={isExistingProperty}
               />
             </label>
             <label className="text-sm">
@@ -474,7 +493,7 @@ export function AgreementForm({
                 className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
                 value={values.property.city}
                 onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, city: e.target.value } }))}
-                disabled={!!values.property.id}
+                disabled={isExistingProperty}
               />
             </label>
             <label className="text-sm">
@@ -483,7 +502,7 @@ export function AgreementForm({
                 className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
                 value={values.property.postal_code}
                 onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, postal_code: e.target.value } }))}
-                disabled={!!values.property.id}
+                disabled={isExistingProperty}
               />
             </label>
             <label className="text-sm">
@@ -492,7 +511,7 @@ export function AgreementForm({
                 className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
                 value={values.property.property_type}
                 onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, property_type: e.target.value } }))}
-                disabled={!!values.property.id}
+                disabled={isExistingProperty}
               >
                 <option value="">Select…</option>
                 <option value="Apartment">Apartment</option>
@@ -508,21 +527,137 @@ export function AgreementForm({
                 className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
                 value={values.property.bedrooms}
                 onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, bedrooms: e.target.value } }))}
-                disabled={!!values.property.id}
+                disabled={isExistingProperty}
               />
             </label>
+            {!isExistingProperty && existingPropertyGroups.length > 0 && (
+              <label className="text-sm">
+                Property group (optional)
+                <select
+                  data-testid="property-group"
+                  className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
+                  value={values.property.group_id}
+                  onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, group_id: e.target.value } }))}
+                >
+                  <option value="">No group</option>
+                  {existingPropertyGroups.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label className="col-span-2 text-sm">
               Description
               <textarea
                 className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
                 value={values.property.description}
                 onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, description: e.target.value } }))}
-                disabled={!!values.property.id}
+                disabled={isExistingProperty}
               />
             </label>
           </div>
         </div>
       </fieldset>
+
+      <fieldset className="space-y-4">
+        <legend className="font-semibold text-neutral-900">Landlord</legend>
+        {isExistingProperty ? (
+          <div className="p-4 border border-neutral-200 rounded-md bg-neutral-50 text-sm">
+            <p className="text-neutral-500 mb-1">Set automatically from the selected property.</p>
+            <p className="font-medium">{values.landlord.full_name || "—"}</p>
+            <p className="text-neutral-600">{values.landlord.id_number}</p>
+          </div>
+        ) : (
+          <div className="p-4 border border-neutral-200 rounded-md space-y-3">
+            {existingLandlords.length > 0 && (
+              <label className="block text-sm">
+                Use existing landlord
+                <select
+                  data-testid="landlord-existing"
+                  className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
+                  value={values.landlord.id ?? ""}
+                  onChange={(e) => selectExistingLandlord(0, e.target.value)}
+                >
+                  <option value="">+ Enter new landlord</option>
+                  {existingLandlords.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.full_name} ({l.id_number})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className="col-span-1 text-sm">
+                Full name *
+                <input
+                  data-testid="landlord-full_name"
+                  className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                  value={values.landlord.full_name}
+                  onChange={(e) => updateLandlord("full_name", e.target.value)}
+                  disabled={!!values.landlord.id}
+                  required
+                />
+              </label>
+              <label className="col-span-1 text-sm">
+                ID number *
+                <input
+                  data-testid="landlord-id_number"
+                  className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                  value={values.landlord.id_number}
+                  onChange={(e) => updateLandlord("id_number", e.target.value)}
+                  disabled={!!values.landlord.id}
+                  required
+                />
+              </label>
+              <label className="col-span-1 text-sm">
+                Phone
+                <input
+                  data-testid="landlord-phone"
+                  className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                  value={values.landlord.phone}
+                  onChange={(e) => updateLandlord("phone", e.target.value)}
+                  disabled={!!values.landlord.id}
+                />
+              </label>
+              <label className="col-span-1 text-sm">
+                Email
+                <input
+                  type="email"
+                  data-testid="landlord-email"
+                  className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                  value={values.landlord.email}
+                  onChange={(e) => updateLandlord("email", e.target.value)}
+                  disabled={!!values.landlord.id}
+                />
+              </label>
+              <label className="col-span-2 text-sm">
+                Address
+                <input
+                  data-testid="landlord-address"
+                  className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
+                  value={values.landlord.address}
+                  onChange={(e) => updateLandlord("address", e.target.value)}
+                  disabled={!!values.landlord.id}
+                />
+              </label>
+            </div>
+          </div>
+        )}
+      </fieldset>
+
+      <PartyFields
+        title="Tenants"
+        kind="tenants"
+        parties={values.tenants}
+        existingOptions={existingTenants}
+        onChange={updateTenant}
+        onSelectExisting={selectExistingTenant}
+        onAdd={addTenant}
+        onRemove={removeTenant}
+      />
 
       <fieldset className="space-y-4">
         <legend className="font-semibold text-neutral-900">Deal terms</legend>

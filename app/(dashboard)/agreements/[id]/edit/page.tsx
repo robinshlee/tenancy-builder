@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAgreementFull } from "@/lib/agreements/server";
-import { listLandlords, listProperties, listTenants } from "@/lib/profiles/server";
+import { listLandlords, listProperties, listPropertyGroups, listTenants } from "@/lib/profiles/server";
 import { AgreementForm, type AgreementFormValues } from "@/app/components/AgreementForm";
 
 export default async function EditAgreementPage({ params }: { params: Promise<{ id: string }> }) {
@@ -9,13 +9,14 @@ export default async function EditAgreementPage({ params }: { params: Promise<{ 
   const supabase = await createClient();
 
   let agreement;
-  let landlords, tenants, properties;
+  let landlords, tenants, properties, propertyGroups;
   try {
-    [agreement, landlords, tenants, properties] = await Promise.all([
+    [agreement, landlords, tenants, properties, propertyGroups] = await Promise.all([
       getAgreementFull(supabase, id),
       listLandlords(supabase),
       listTenants(supabase),
       listProperties(supabase),
+      listPropertyGroups(supabase),
     ]);
   } catch (err) {
     console.error(err);
@@ -26,15 +27,19 @@ export default async function EditAgreementPage({ params }: { params: Promise<{ 
     notFound();
   }
 
+  const currentLandlord = agreement.landlords[0];
+
   const initialValues: AgreementFormValues = {
-    landlords: agreement.landlords.map((l) => ({
-      id: l.id,
-      full_name: l.full_name,
-      id_number: l.id_number,
-      phone: l.phone ?? "",
-      email: l.email ?? "",
-      address: l.address ?? "",
-    })),
+    landlord: currentLandlord
+      ? {
+          id: currentLandlord.id,
+          full_name: currentLandlord.full_name,
+          id_number: currentLandlord.id_number,
+          phone: currentLandlord.phone ?? "",
+          email: currentLandlord.email ?? "",
+          address: currentLandlord.address ?? "",
+        }
+      : { full_name: "", id_number: "", phone: "", email: "", address: "" },
     tenants: agreement.tenants.map((t) => ({
       id: t.id,
       full_name: t.full_name,
@@ -52,6 +57,7 @@ export default async function EditAgreementPage({ params }: { params: Promise<{ 
       property_type: agreement.property.property_type ?? "",
       bedrooms: agreement.property.bedrooms != null ? String(agreement.property.bedrooms) : "",
       description: agreement.property.description ?? "",
+      group_id: agreement.property.group_id ?? "",
     },
     rental_amount: String(agreement.rental_amount),
     deposit_amount: agreement.deposit_amount != null ? String(agreement.deposit_amount) : "",
@@ -71,6 +77,7 @@ export default async function EditAgreementPage({ params }: { params: Promise<{ 
         existingLandlords={landlords}
         existingTenants={tenants}
         existingProperties={properties}
+        existingPropertyGroups={propertyGroups}
       />
     </main>
   );
