@@ -1,40 +1,33 @@
-# Test Plan
+# Test Plan — Tenancy Builder
 
-## Core Success Scenario — Generate a Tenancy Agreement
+## 1. Core Success Scenario
+**"Generate and download a tenancy agreement in under 3 minutes"**
 
-1. Open `/agreements` — confirm 3 demo agreements are visible without logging in
-2. Click "New Agreement"
-3. Enter landlord: *Margaret Osei*, ID *GHA-8821045-3*, phone *+233 24 400 1111*
-4. Enter tenant: *James Boateng*, ID *GHA-9900112-7*, phone *+233 26 511 4444*
-5. Enter property: *14 Cantonments Road, Accra*
-6. Enter rent: *3500*, deposit: *7000*, start: *2025-02-01*, end: *2026-01-31*, due day: *1*
-7. Click Generate
-8. **Pass:** Redirected to `/agreements/[id]`; agreement text contains all entered values
-9. Click Download PDF
-10. **Pass:** PDF downloads, opens correctly, contains all fields including both party names and ID numbers
-11. Return to `/agreements`
-12. **Pass:** New agreement appears at top of list with correct reference number
+| Step | Action | Expected result |
+|---|---|---|
+| 1 | Open `/` without logging in | Agreements dashboard loads with seeded data — no login wall |
+| 2 | Click **New Agreement** | Agreement form opens, landlord/tenant/property selectors populated from DB |
+| 3 | Select landlord "Margaret Osei", tenant "David Kuffour", property "45 Osu Badu Street" | Selections persist in form state |
+| 4 | Enter rent GHS 1,800, deposit GHS 3,600, start 2025-06-01, end 2026-05-31 | Fields accept input without error |
+| 5 | Click **Generate Agreement** | Loading spinner shown; agreement preview page loads within 3 s |
+| 6 | Inspect preview | Full name, identity number, property address, rent, deposit, dates, and special conditions all correctly populated |
+| 7 | Open Supabase → agreements table | New row present with correct values and `generated_document_html` not null |
+| 8 | Click **Download PDF** | Browser downloads a clean PDF with all agreement content |
+| 9 | Refresh agreement preview page | Agreement still loads from DB (not a client-side cache) |
 
----
+## 2. Empty States
+- Open `/landlords` with no records → "No landlords yet. Add your first landlord." button visible.
+- Open agreement form with no properties in DB → inline "Add property" prompt shown, not a blank dropdown.
 
-## Empty State
-- Delete all agreements (or open a fresh DB) → `/agreements` shows "No agreements yet" CTA
-- `/agreements/[nonexistent-id]` → shows 404 message, not a crash
+## 3. Error Cases
+| Scenario | Expected behaviour |
+|---|---|
+| Submit form with no tenant selected | Inline validation error: "At least one tenant is required" |
+| End date before start date | Inline error: "End date must be after start date" |
+| Supabase write fails (network off) | Toast error: "Could not save agreement. Please try again." — no partial save |
+| Navigate to `/agreements/nonexistent-id` | 404 page with "Agreement not found" copy |
 
-## Validation Errors
-- Submit form with `lease_end_date` before `lease_start_date` → inline error, form not submitted
-- Submit with landlord name missing → required field error highlighted
-- Submit with non-numeric rental amount → field error, no DB write
-
-## Edit & Delete
-- Edit an agreement, change rent to 4000 → save → preview shows updated amount → DB row updated
-- Delete an agreement → confirmation dialog → confirm → removed from list → DB row gone
-- Cancel delete → agreement still in list
-
-## Error States
-- Supabase offline (simulate by revoking key) → form submission shows "Something went wrong. Please try again." — no crash, no empty white screen
-- PDF route fails → button shows error toast, does not navigate away
-
-## Security (Sprint 5)
-- Log in as Agent A, note agreement IDs → log out → log in as Agent B → attempt to fetch Agent A's agreement URL directly → receive 403 / empty result
-- Verify no Supabase service-role key appears in browser network tab at any point
+## 4. Data Integrity
+- Finalised agreement → edit button disabled; status badge shows "Finalised".
+- Delete a landlord linked to a finalised agreement → error returned, record not deleted.
+- Audit log gains one row for every generate, update, and delete action.

@@ -1,82 +1,91 @@
-# Tasks & Sprints
+# Tasks — Tenancy Builder
 
-## Sprint 1 — Database + Agreement Engine ✦ v1 functional milestone
-**Goal:** A real user can generate a tenancy agreement end-to-end against the database.
+## Sprint 1 — Database & seed data
+**Goal:** All tables exist, RLS open policies active, demo rows visible without login.
 
-- [ ] Run migration SQL (all tables, RLS, seed data)
-- [ ] `/agreements` list page — reads from DB, shows 3 demo agreements
-- [ ] Empty state: "No agreements yet. Create your first one."
-- [ ] `/agreements/new` — full form (landlord fields, tenant fields, property fields, rent, deposit, dates, payment day)
-- [ ] Client-side validation: required fields, date range check
-- [ ] POST `/api/agreements` — server route: validate → assemble `generated_text` → insert rows → return id
-- [ ] `/agreements/[id]` — preview page: fetch from DB, render full agreement text
-- [ ] Loading spinner, error boundary, 404 for unknown id
-- [ ] Edit agreement: form pre-filled from DB, PATCH route, UI updates
-- [ ] Delete agreement: confirmation dialog, DELETE route, removed from list
+- [ ] Run migration SQL against Supabase project
+- [ ] Verify all 6 tables created with correct columns
+- [ ] Confirm 3–5 seed rows readable via Supabase Table Editor (no login)
+- [ ] Confirm RLS policies applied (`pg_policies` check)
 
-**Definition of Done:** Agent fills the new-agreement form, submits, sees the formatted agreement on `/agreements/[id]`, and the row exists in Supabase. Edit and delete also persist. All screens handle loading/empty/error. Works without login.
+**Definition of Done:** `select * from agreements` returns 3 rows in Supabase SQL editor with no auth token.
 
 ---
 
-## Sprint 2 — PDF Export & Polish
-**Goal:** Agent can download the agreement as a print-ready PDF.
+## Sprint 2 — Agreement generation engine ✅ *v1 functional milestone*
+**Goal:** Agent fills one form, a complete tenancy agreement is generated and downloadable.
 
-- [ ] GET `/api/agreements/[id]/pdf` — server renders PDF from `generated_text`
-- [ ] "Download PDF" button on preview page
-- [ ] PDF includes all party names, ID numbers, property, rent, dates, agent reference number
-- [ ] Consistent print layout (margins, headings, signature lines)
-- [ ] Reference number auto-generated (TA-YYYY-NNN) on creation
+- [ ] Agreement generation form: landlord selector, tenant selector (multi), property selector, rent, deposit, start date, end date, special conditions
+- [ ] Inline "Add new" flow for landlord/tenant/property from within the form
+- [ ] Server action: validate inputs, write `agreements` + join rows, assemble HTML document from template
+- [ ] Save `generated_document_html` back to DB
+- [ ] Agreement preview page renders the full document
+- [ ] PDF download button (print stylesheet or `@react-pdf/renderer`)
+- [ ] Loading, empty, and error states on form and preview
+- [ ] Audit log entry written on generate
 
-**Definition of Done:** Clicking Download PDF returns a valid, populated PDF file in < 5 seconds for any agreement.
-
----
-
-## Sprint 3 — Reusable Profiles
-**Goal:** Agent picks from saved landlord / tenant / property records instead of retyping.
-
-- [ ] `/landlords` CRUD (list, new, edit, delete)
-- [ ] `/tenants` CRUD (list, new, edit, delete)
-- [ ] `/properties` CRUD (list, new, edit, delete)
-- [ ] New-agreement form: dropdown to select existing profile OR enter new inline
-- [ ] Agreement record linked to profile IDs; profile changes do NOT retroactively alter saved agreement text
-
-**Definition of Done:** Agent creates a second agreement for the same tenant in under 60 seconds by picking from the dropdown.
+**Definition of Done:** Fill the form with demo data → click Generate → agreement preview loads with all correct names, IDs, property, rent, dates → PDF downloads and prints cleanly. No dead buttons. Persists after page refresh.
 
 ---
 
-## Sprint 4 — AI Clause Suggestions
-**Goal:** AI drafts 3 special conditions; agent accepts or rejects each before they enter the agreement.
+## Sprint 3 — Records management UI
+**Goal:** Full CRUD for landlords, tenants, and properties.
 
-- [ ] Server-side `draft_clauses` function calls OpenAI (key in env only)
-- [ ] Triggered after agreement is saved; stores results in `agreement_clauses`
-- [ ] Preview page shows suggestions with Accept / Edit / Reject controls
-- [ ] Accepting a clause updates `review_status = 'accepted'` and appends to `generated_text`
-- [ ] Rejecting sets `review_status = 'rejected'`; clause never appears in agreement
-- [ ] AI entirely optional — agreement works fully if call fails or is disabled
+- [ ] `/landlords` list + create/edit/delete
+- [ ] `/tenants` list + create/edit/delete
+- [ ] `/properties` list + create/edit/delete
+- [ ] Empty state copy on each list
+- [ ] Confirm deletes are blocked if record is linked to a finalised agreement
 
-**Definition of Done:** An accepted clause appears in the agreement preview and in the downloaded PDF. A rejected clause does not. App behaves identically if the AI call throws an error.
+**Definition of Done:** Create a new landlord, edit their phone number, delete them — all changes reflected immediately in the list and in Supabase without a page reload.
 
 ---
 
-## Sprint 5 — Lock It Down (Auth + Per-Agent Isolation)
-**Goal:** Each agent sees only their own agreements; PII is protected.
+## Sprint 4 — Agreements dashboard
+**Goal:** All agreements visible with status; drafts editable.
 
-- [ ] Supabase Auth: email/password sign-up and login pages
-- [ ] All new writes set `user_id = auth.uid()`
-- [ ] Replace all `_v1_` RLS policies with `auth.uid() = user_id`
-- [ ] Redirect unauthenticated requests to `/login` (only added in this sprint)
-- [ ] Smoke test: agent A cannot query agent B's agreements, landlords, tenants, properties
-- [ ] Session management: sign-out clears session
+- [ ] `/agreements` list: property address, tenant names, rent, dates, status badge
+- [ ] Click row → agreement preview
+- [ ] Edit draft agreement and re-generate document
+- [ ] Mark agreement as finalised (locks editing)
 
-**Definition of Done:** Two test accounts each see only their own data. Supabase RLS blocks cross-agent reads at the DB layer (verified with direct SQL query as each user).
+**Definition of Done:** Three seeded agreements appear on load. Editing a draft and re-generating updates the DB and preview.
+
+---
+
+## Sprint 5 — Lock it down
+**Goal:** Per-agent data isolation; app safe for real client data.
+
+- [ ] Enable Supabase Auth (email/password)
+- [ ] Login and signup pages at `/login`
+- [ ] Write `user_id = auth.uid()` on all inserts via server actions
+- [ ] Drop v1 open policies; apply owner-scoped RLS
+- [ ] Redirect unauthenticated requests to `/login`
+- [ ] Test: two agents cannot see each other's records
+- [ ] Demo account seeded with existing demo rows
+
+**Definition of Done:** Agent A logs in and sees only their records. Agent B logs in and sees only theirs. `select * from agreements` with no token returns 0 rows.
+
+---
+
+## Sprint 6 — Template & polish
+**Goal:** Customisable agreement template; print-ready output.
+
+- [ ] Template editor: editable standard clauses per property type
+- [ ] Jurisdiction selector (affects mandatory clause set)
+- [ ] Print CSS polish: page breaks, header/footer, signature blocks
+- [ ] Mobile-responsive form layout
+
+**Definition of Done:** Agent adds a custom clause, generates agreement — custom clause appears in the correct section of the PDF.
 
 ---
 
 ## Gantt (sprint → feature)
 ```
-Sprint 1  |██████ DB + Form + Generate + Preview + Edit/Delete
-Sprint 2  |████ PDF export + reference numbers
-Sprint 3  |████ Saved profiles + form pre-fill
-Sprint 4  |████ AI clause suggestions
-Sprint 5  |████ Auth + RLS lock-down
+Sprint 1  | DB schema + seed data
+Sprint 2  | Agreement form + generate + PDF          ← v1 functional
+Sprint 3  | Landlord / Tenant / Property CRUD
+Sprint 4  | Agreements dashboard + status
+Sprint 5  | Auth + RLS lock-down
+Sprint 6  | Template editor + polish
 ```
