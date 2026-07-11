@@ -73,7 +73,7 @@ export function PropertyForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <div className="rounded-md bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">{error}</div>}
-      <div className="grid grid-cols-2 gap-3 p-4 border border-neutral-200 rounded-md bg-white">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 border border-neutral-200 rounded-md bg-white">
         <label className="col-span-2 text-sm">
           Address *
           <input

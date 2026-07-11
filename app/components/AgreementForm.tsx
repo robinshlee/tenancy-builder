@@ -131,7 +131,7 @@ function PartyFields({
             </label>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="col-span-1 text-sm">
               Full name *
               <input
@@ -434,7 +434,7 @@ export function AgreementForm({
               </select>
             </label>
           )}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="col-span-2 text-sm">
               Address *
               <input
@@ -514,7 +514,7 @@ export function AgreementForm({
 
       <fieldset className="space-y-4">
         <legend className="font-semibold text-neutral-900">Deal terms</legend>
-        <div className="grid grid-cols-2 gap-3 p-4 border border-neutral-200 rounded-md">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 border border-neutral-200 rounded-md">
           <label className="text-sm">
             Monthly rent (GHS) *
             <input
