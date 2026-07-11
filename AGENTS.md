@@ -1,6 +1,6 @@
 # tenancy-builder
 
-Tenancy-Builder is an internal tool for letting agents that auto-generates a complete, ready-to-sign tenancy agreement from a single form submission — turning hours of document prep into minutes.
+Tenancy-builder is an internal tool for letting agents that auto-generates a complete, ready-to-sign tenancy agreement the moment landlord, tenant, property, and deal terms are entered.
 
 ## ⚠️ READ THIS BEFORE WRITING ANY CODE
 A complete, correct plan for this app is already committed in `/docs`. Do **not** start
