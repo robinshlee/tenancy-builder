@@ -93,7 +93,7 @@ create policy "agreement_clauses_owner_read" on agreement_clauses for select usi
 drop policy if exists "agreement_clauses_owner_write" on agreement_clauses;
 create policy "agreement_clauses_owner_write" on agreement_clauses for all using (auth.uid() = user_id or is_admin()) with check (auth.uid() = user_id or is_admin());
 
--- Bootstrap: promote the account that's been driving this project so the app has at least
--- one admin able to reach /admin/users and promote others. Safe no-op if that email doesn't exist.
-update profiles set role = 'admin'
-where user_id = (select id from auth.users where email = 'robin.lsh@gmail.com');
+-- Bootstrap: this migration creates the very first RLS policy that lets *any* admin exist,
+-- so at least one account needs promoting by hand after it runs (there's no admin yet to do
+-- it through the app). Run once, directly against the database, not committed here:
+--   update profiles set role = 'admin' where user_id = '<your-auth-user-id>';
