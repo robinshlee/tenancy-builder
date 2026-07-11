@@ -3,102 +3,26 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { EMAIL_PATTERN } from "@/lib/agreements/validation";
+import { emptyParty, emptyProperty } from "./agreementFormShared";
+import type {
+  PartyInput,
+  PropertyInput,
+  ExistingLandlord,
+  ExistingTenant,
+  ExistingPropertyGroup,
+  ExistingProperty,
+  ScheduleInput,
+  AgreementFormValues,
+} from "./agreementFormShared";
 
-type PartyInput = {
-  id?: string;
-  full_name: string;
-  id_number: string;
-  phone: string;
-  email: string;
-  address: string;
-};
-
-type PropertyInput = {
-  id?: string;
-  address: string;
-  suburb: string;
-  city: string;
-  postal_code: string;
-  property_type: string;
-  bedrooms: string;
-  description: string;
-  group_id: string;
-};
-
-export type ExistingLandlord = {
-  id: string;
-  full_name: string;
-  id_number: string;
-  phone: string | null;
-  email: string | null;
-  address: string | null;
-};
-
-export type ExistingTenant = {
-  id: string;
-  full_name: string;
-  id_number: string;
-  phone: string | null;
-  email: string | null;
-  current_address: string | null;
-};
-
-export type ExistingPropertyGroup = {
-  id: string;
-  name: string;
-  address: string | null;
-  city: string | null;
-};
-
-export type ExistingProperty = {
-  id: string;
-  address: string;
-  suburb: string | null;
-  city: string | null;
-  postal_code: string | null;
-  property_type: string | null;
-  bedrooms: number | null;
-  description: string | null;
-  group_id: string | null;
-  landlord_id: string | null;
-  landlord: { id: string; full_name: string; id_number: string } | null;
-};
-
-export type AgreementFormValues = {
-  property: PropertyInput;
-  landlord: PartyInput;
-  tenants: PartyInput[];
-  rental_amount: string;
-  deposit_amount: string;
-  lease_start_date: string;
-  lease_end_date: string;
-  payment_due_day: string;
-  special_conditions: string;
-};
-
-const emptyParty: PartyInput = { full_name: "", id_number: "", phone: "", email: "", address: "" };
-const emptyProperty: PropertyInput = {
-  address: "",
-  suburb: "",
-  city: "",
-  postal_code: "",
-  property_type: "",
-  bedrooms: "",
-  description: "",
-  group_id: "",
-};
-
-export const emptyFormValues: AgreementFormValues = {
-  property: { ...emptyProperty },
-  landlord: { ...emptyParty },
-  tenants: [{ ...emptyParty }],
-  rental_amount: "",
-  deposit_amount: "",
-  lease_start_date: "",
-  lease_end_date: "",
-  payment_due_day: "1",
-  special_conditions: "",
-};
+export type {
+  ExistingLandlord,
+  ExistingTenant,
+  ExistingPropertyGroup,
+  ExistingProperty,
+  ScheduleInput,
+  AgreementFormValues,
+} from "./agreementFormShared";
 
 function PartyFields({
   title,
@@ -401,6 +325,13 @@ export function AgreementForm({
       lease_end_date: values.lease_end_date,
       payment_due_day: Number(values.payment_due_day),
       special_conditions: values.special_conditions || undefined,
+      schedule: {
+        notice_period: values.schedule.notice_period || undefined,
+        renewal_terms: values.schedule.renewal_terms || undefined,
+        maintenance_responsibility: values.schedule.maintenance_responsibility || undefined,
+        utilities_responsibility: values.schedule.utilities_responsibility || undefined,
+        inventory_notes: values.schedule.inventory_notes || undefined,
+      },
     };
 
     setSubmitting(true);
@@ -728,6 +659,65 @@ export function AgreementForm({
               className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
               value={values.special_conditions}
               onChange={(e) => setValues((v) => ({ ...v, special_conditions: e.target.value }))}
+            />
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset className="space-y-4">
+        <legend className="font-semibold text-neutral-900">Schedule</legend>
+        <p className="text-sm text-neutral-500 -mt-2">
+          Standard lease terms attached to this agreement. Pre-filled from the admin&apos;s defaults — edit any of
+          them for this agreement specifically.
+        </p>
+        <div className="grid grid-cols-1 gap-3 p-4 border border-neutral-200 rounded-md">
+          <label className="text-sm">
+            Notice period
+            <textarea
+              data-testid="schedule-notice_period"
+              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 min-h-[60px]"
+              value={values.schedule.notice_period}
+              onChange={(e) => setValues((v) => ({ ...v, schedule: { ...v.schedule, notice_period: e.target.value } }))}
+            />
+          </label>
+          <label className="text-sm">
+            Renewal / termination terms
+            <textarea
+              data-testid="schedule-renewal_terms"
+              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 min-h-[60px]"
+              value={values.schedule.renewal_terms}
+              onChange={(e) => setValues((v) => ({ ...v, schedule: { ...v.schedule, renewal_terms: e.target.value } }))}
+            />
+          </label>
+          <label className="text-sm">
+            Maintenance &amp; repair responsibilities
+            <textarea
+              data-testid="schedule-maintenance_responsibility"
+              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 min-h-[60px]"
+              value={values.schedule.maintenance_responsibility}
+              onChange={(e) =>
+                setValues((v) => ({ ...v, schedule: { ...v.schedule, maintenance_responsibility: e.target.value } }))
+              }
+            />
+          </label>
+          <label className="text-sm">
+            Utilities responsibility
+            <textarea
+              data-testid="schedule-utilities_responsibility"
+              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 min-h-[60px]"
+              value={values.schedule.utilities_responsibility}
+              onChange={(e) =>
+                setValues((v) => ({ ...v, schedule: { ...v.schedule, utilities_responsibility: e.target.value } }))
+              }
+            />
+          </label>
+          <label className="text-sm">
+            Inventory / condition notes
+            <textarea
+              data-testid="schedule-inventory_notes"
+              className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 min-h-[60px]"
+              value={values.schedule.inventory_notes}
+              onChange={(e) => setValues((v) => ({ ...v, schedule: { ...v.schedule, inventory_notes: e.target.value } }))}
             />
           </label>
         </div>

@@ -49,6 +49,15 @@ function AgreementPdfDocument({ agreement, template }: { agreement: AgreementFul
     .split("\n")
     .map((l) => l.trim())
     .filter(Boolean);
+  const scheduleItems: [string, string][] = (
+    [
+      ["Notice Period", agreement.notice_period],
+      ["Renewal / Termination", agreement.renewal_terms],
+      ["Maintenance & Repairs", agreement.maintenance_responsibility],
+      ["Utilities", agreement.utilities_responsibility],
+      ["Inventory & Condition", agreement.inventory_notes],
+    ] as [string, string | null][]
+  ).filter(([, v]) => v?.trim()) as [string, string][];
 
   return (
     <Document>
@@ -137,14 +146,24 @@ function AgreementPdfDocument({ agreement, template }: { agreement: AgreementFul
           </>
         )}
 
-        {boilerplateLines.length > 0 && (
+        {(scheduleItems.length > 0 || boilerplateLines.length > 0) && (
           <>
             <Text style={styles.sectionHeading}>SCHEDULE</Text>
-            {boilerplateLines.map((line, i) => (
-              <Text key={i} style={styles.indented}>
-                {line}
+            {scheduleItems.map(([label, value], i) => (
+              <Text key={label} style={styles.indented}>
+                {i + 1}. {label}: {value}
               </Text>
             ))}
+            {boilerplateLines.length > 0 && (
+              <>
+                <Text style={[styles.indented, { marginTop: 6, fontWeight: 700 }]}>Additional notes:</Text>
+                {boilerplateLines.map((line, i) => (
+                  <Text key={i} style={styles.indented}>
+                    {line}
+                  </Text>
+                ))}
+              </>
+            )}
           </>
         )}
 

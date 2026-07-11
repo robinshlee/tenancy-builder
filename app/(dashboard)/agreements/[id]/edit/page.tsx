@@ -65,6 +65,13 @@ export default async function EditAgreementPage({ params }: { params: Promise<{ 
     lease_end_date: agreement.lease_end_date,
     payment_due_day: String(agreement.payment_due_day),
     special_conditions: agreement.special_conditions ?? "",
+    schedule: {
+      notice_period: agreement.notice_period ?? "",
+      renewal_terms: agreement.renewal_terms ?? "",
+      maintenance_responsibility: agreement.maintenance_responsibility ?? "",
+      utilities_responsibility: agreement.utilities_responsibility ?? "",
+      inventory_notes: agreement.inventory_notes ?? "",
+    },
   };
 
   return (

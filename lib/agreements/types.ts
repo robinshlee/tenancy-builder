@@ -37,7 +37,15 @@ export type PropertyGroup = {
   created_at: string;
 };
 
-export type Agreement = {
+export type ScheduleFields = {
+  notice_period: string | null;
+  renewal_terms: string | null;
+  maintenance_responsibility: string | null;
+  utilities_responsibility: string | null;
+  inventory_notes: string | null;
+};
+
+export type Agreement = ScheduleFields & {
   id: string;
   reference_number: string;
   property_id: string;
@@ -91,6 +99,14 @@ export type PropertyInputData = {
   group_id?: string;
 };
 
+export type ScheduleInput = {
+  notice_period?: string;
+  renewal_terms?: string;
+  maintenance_responsibility?: string;
+  utilities_responsibility?: string;
+  inventory_notes?: string;
+};
+
 export type AgreementFormInput = {
   property: PropertyInputData;
   // Only used when property.id is not set (i.e. a brand new property is being created
@@ -103,4 +119,5 @@ export type AgreementFormInput = {
   lease_end_date: string;
   payment_due_day: number;
   special_conditions?: string;
+  schedule?: ScheduleInput;
 };

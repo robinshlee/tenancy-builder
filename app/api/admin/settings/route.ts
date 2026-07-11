@@ -15,7 +15,15 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  let body: { letterhead_name?: string; boilerplate_clauses?: string };
+  let body: {
+    letterhead_name?: string;
+    boilerplate_clauses?: string;
+    default_notice_period?: string;
+    default_renewal_terms?: string;
+    default_maintenance_responsibility?: string;
+    default_utilities_responsibility?: string;
+    default_inventory_notes?: string;
+  };
   try {
     body = await request.json();
   } catch {
@@ -27,10 +35,19 @@ export async function PATCH(request: Request) {
     if (!(await isCurrentUserAdmin(supabase))) {
       return NextResponse.json({ error: "Admin access required." }, { status: 403 });
     }
-    const settings = await updateAppSettings(supabase, {
-      letterhead_name: body.letterhead_name ?? null,
-      boilerplate_clauses: body.boilerplate_clauses ?? null,
-    });
+    const update: Record<string, string | null> = {};
+    for (const key of [
+      "letterhead_name",
+      "boilerplate_clauses",
+      "default_notice_period",
+      "default_renewal_terms",
+      "default_maintenance_responsibility",
+      "default_utilities_responsibility",
+      "default_inventory_notes",
+    ] as const) {
+      if (key in body) update[key] = body[key] || null;
+    }
+    const settings = await updateAppSettings(supabase, update);
     return NextResponse.json({ settings });
   } catch (err) {
     console.error(err);

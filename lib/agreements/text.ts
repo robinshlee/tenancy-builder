@@ -29,6 +29,11 @@ export function generateAgreementText(params: {
   special_conditions?: string | null;
   letterhead_name?: string | null;
   boilerplate_clauses?: string | null;
+  notice_period?: string | null;
+  renewal_terms?: string | null;
+  maintenance_responsibility?: string | null;
+  utilities_responsibility?: string | null;
+  inventory_notes?: string | null;
 }): string {
   const {
     reference_number,
@@ -43,6 +48,11 @@ export function generateAgreementText(params: {
     special_conditions,
     letterhead_name,
     boilerplate_clauses,
+    notice_period,
+    renewal_terms,
+    maintenance_responsibility,
+    utilities_responsibility,
+    inventory_notes,
   } = params;
 
   const propertyLine = [property.address, property.suburb, property.city].filter(Boolean).join(", ");
@@ -104,17 +114,34 @@ export function generateAgreementText(params: {
     );
   }
 
-  if (boilerplate_clauses?.trim()) {
+  const scheduleItems: [string, string][] = (
+    [
+      ["Notice Period", notice_period],
+      ["Renewal / Termination", renewal_terms],
+      ["Maintenance & Repairs", maintenance_responsibility],
+      ["Utilities", utilities_responsibility],
+      ["Inventory & Condition", inventory_notes],
+    ] as [string, string | null | undefined][]
+  ).filter((pair): pair is [string, string] => !!pair[1]?.trim());
+
+  if (scheduleItems.length > 0 || boilerplate_clauses?.trim()) {
     lines.push("");
     lines.push("SCHEDULE:");
-    lines.push(
-      boilerplate_clauses
-        .trim()
-        .split("\n")
-        .filter((l) => l.trim())
-        .map((l) => `  - ${l.trim()}`)
-        .join("\n"),
-    );
+    scheduleItems.forEach(([label, value], i) => {
+      lines.push(`  ${i + 1}. ${label}: ${value.trim()}`);
+    });
+    if (boilerplate_clauses?.trim()) {
+      lines.push("");
+      lines.push("  Additional notes:");
+      lines.push(
+        boilerplate_clauses
+          .trim()
+          .split("\n")
+          .filter((l) => l.trim())
+          .map((l) => `  - ${l.trim()}`)
+          .join("\n"),
+      );
+    }
   }
 
   lines.push("");

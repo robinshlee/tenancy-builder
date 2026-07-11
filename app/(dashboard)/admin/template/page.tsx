@@ -18,8 +18,10 @@ export default async function AdminTemplatePage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Agreement Template</h1>
         <p className="text-sm text-neutral-500">
-          Branding and boilerplate used on every generated agreement. The cover page and schedule for each
-          individual agreement are still generated from that agreement&apos;s own property, party, and deal details.
+          Branding, cover page reference, and schedule defaults used across every generated agreement. Each
+          agreement&apos;s cover page and schedule are still generated from that agreement&apos;s own property,
+          party, and deal details — schedule terms just start from your defaults below and can be edited per
+          agreement.
         </p>
       </div>
       <TemplateSettingsForm settings={settings} />

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { appendAcceptedClauses, generateAgreementText } from "./text";
-import type { AgreementFormInput, AgreementFull, PartyInput } from "./types";
+import type { AgreementFormInput, AgreementFull, PartyInput, ScheduleFields, ScheduleInput } from "./types";
 import type { DraftedClause } from "./clauses";
 
 /** A known, safe-to-display validation failure (as opposed to an unexpected DB/infra error). */
@@ -9,11 +9,46 @@ export class AgreementInputError extends Error {}
 async function getTemplateSettings(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from("app_settings")
-    .select("letterhead_name, boilerplate_clauses")
+    .select(
+      "letterhead_name, boilerplate_clauses, default_notice_period, default_renewal_terms, default_maintenance_responsibility, default_utilities_responsibility, default_inventory_notes",
+    )
     .eq("id", 1)
     .maybeSingle();
   if (error) throw error;
-  return { letterhead_name: data?.letterhead_name ?? null, boilerplate_clauses: data?.boilerplate_clauses ?? null };
+  return {
+    letterhead_name: data?.letterhead_name ?? null,
+    boilerplate_clauses: data?.boilerplate_clauses ?? null,
+    default_notice_period: data?.default_notice_period ?? null,
+    default_renewal_terms: data?.default_renewal_terms ?? null,
+    default_maintenance_responsibility: data?.default_maintenance_responsibility ?? null,
+    default_utilities_responsibility: data?.default_utilities_responsibility ?? null,
+    default_inventory_notes: data?.default_inventory_notes ?? null,
+  };
+}
+
+/** Per-agreement schedule values fall back to the admin's configured defaults when omitted. */
+function resolveSchedule(
+  input: ScheduleInput | undefined,
+  defaults: {
+    default_notice_period: string | null;
+    default_renewal_terms: string | null;
+    default_maintenance_responsibility: string | null;
+    default_utilities_responsibility: string | null;
+    default_inventory_notes: string | null;
+  },
+  fallback?: ScheduleFields,
+): ScheduleFields {
+  return {
+    notice_period: input?.notice_period?.trim() || fallback?.notice_period || defaults.default_notice_period,
+    renewal_terms: input?.renewal_terms?.trim() || fallback?.renewal_terms || defaults.default_renewal_terms,
+    maintenance_responsibility:
+      input?.maintenance_responsibility?.trim() ||
+      fallback?.maintenance_responsibility ||
+      defaults.default_maintenance_responsibility,
+    utilities_responsibility:
+      input?.utilities_responsibility?.trim() || fallback?.utilities_responsibility || defaults.default_utilities_responsibility,
+    inventory_notes: input?.inventory_notes?.trim() || fallback?.inventory_notes || defaults.default_inventory_notes,
+  };
 }
 
 export async function generateReferenceNumber(supabase: SupabaseClient): Promise<string> {
@@ -136,6 +171,8 @@ export async function createAgreement(supabase: SupabaseClient, input: Agreement
     getTemplateSettings(supabase),
   ]);
 
+  const schedule = resolveSchedule(input.schedule, templateSettings);
+
   const generatedText = generateAgreementText({
     reference_number: referenceNumber,
     landlords: [landlord],
@@ -149,6 +186,7 @@ export async function createAgreement(supabase: SupabaseClient, input: Agreement
     special_conditions: input.special_conditions,
     letterhead_name: templateSettings.letterhead_name,
     boilerplate_clauses: templateSettings.boilerplate_clauses,
+    ...schedule,
   });
 
   const { data: agreement, error: agreementError } = await supabase
@@ -164,6 +202,7 @@ export async function createAgreement(supabase: SupabaseClient, input: Agreement
       special_conditions: input.special_conditions || null,
       generated_text: generatedText,
       status: "draft",
+      ...schedule,
     })
     .select()
     .single();
@@ -234,6 +273,7 @@ export async function updateAgreement(supabase: SupabaseClient, id: string, inpu
   ]);
 
   const acceptedClauses = existing.clauses.filter((c) => c.clause_text_review_status === "accepted").map((c) => c.clause_text);
+  const schedule = resolveSchedule(input.schedule, templateSettings, existing);
 
   const generatedText = generateAgreementText({
     reference_number: existing.reference_number,
@@ -248,6 +288,7 @@ export async function updateAgreement(supabase: SupabaseClient, id: string, inpu
     special_conditions: input.special_conditions,
     letterhead_name: templateSettings.letterhead_name,
     boilerplate_clauses: templateSettings.boilerplate_clauses,
+    ...schedule,
   });
 
   const finalText = appendAcceptedClauses(generatedText, acceptedClauses);
@@ -263,6 +304,7 @@ export async function updateAgreement(supabase: SupabaseClient, id: string, inpu
       payment_due_day: input.payment_due_day,
       special_conditions: input.special_conditions || null,
       generated_text: finalText,
+      ...schedule,
     })
     .eq("id", id)
     .select()
@@ -308,6 +350,11 @@ async function rebuildGeneratedText(supabase: SupabaseClient, agreement: Agreeme
     special_conditions: agreement.special_conditions,
     letterhead_name: templateSettings.letterhead_name,
     boilerplate_clauses: templateSettings.boilerplate_clauses,
+    notice_period: agreement.notice_period,
+    renewal_terms: agreement.renewal_terms,
+    maintenance_responsibility: agreement.maintenance_responsibility,
+    utilities_responsibility: agreement.utilities_responsibility,
+    inventory_notes: agreement.inventory_notes,
   });
 
   return appendAcceptedClauses(generatedText, acceptedClauses);
