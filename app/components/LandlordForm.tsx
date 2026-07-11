@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { LandlordProfileInput } from "@/lib/profiles/server";
+import { EMAIL_PATTERN } from "@/lib/agreements/validation";
 
 export function LandlordForm({
   mode,
@@ -17,13 +18,23 @@ export function LandlordForm({
   const [values, setValues] = useState(initialValues);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  function showError(message: string) {
+    setError(message);
+    requestAnimationFrame(() => errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
     if (!values.full_name.trim() || !values.id_number.trim()) {
-      setError("Full name and ID number are required.");
+      showError("Full name and ID number are required.");
+      return;
+    }
+    if (values.email?.trim() && !EMAIL_PATTERN.test(values.email.trim())) {
+      showError("Email address is not valid.");
       return;
     }
 
@@ -38,21 +49,25 @@ export function LandlordForm({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(body.error || "Something went wrong. Please try again.");
+        showError(body.error || "Something went wrong. Please try again.");
         setSubmitting(false);
         return;
       }
       router.push("/landlords");
       router.refresh();
     } catch {
-      setError("Something went wrong. Please try again.");
+      showError("Something went wrong. Please try again.");
       setSubmitting(false);
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <div className="rounded-md bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">{error}</div>}
+      {error && (
+        <div ref={errorRef} className="rounded-md bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+          {error}
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 border border-neutral-200 rounded-md bg-white">
         <label className="col-span-1 text-sm">
           Full name *
@@ -83,6 +98,7 @@ export function LandlordForm({
         <label className="col-span-1 text-sm">
           Email
           <input
+            type="email"
             className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2"
             value={values.email ?? ""}
             onChange={(e) => setValues((v) => ({ ...v, email: e.target.value }))}

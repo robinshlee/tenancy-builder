@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createLandlord, listLandlords, type LandlordProfileInput } from "@/lib/profiles/server";
+import { EMAIL_PATTERN } from "@/lib/agreements/validation";
 
 export async function GET() {
   try {
@@ -23,6 +24,9 @@ export async function POST(request: Request) {
 
   if (!body.full_name?.trim() || !body.id_number?.trim()) {
     return NextResponse.json({ error: "Full name and ID number are required." }, { status: 422 });
+  }
+  if (body.email?.trim() && !EMAIL_PATTERN.test(body.email.trim())) {
+    return NextResponse.json({ error: "Email address is not valid." }, { status: 422 });
   }
 
   try {

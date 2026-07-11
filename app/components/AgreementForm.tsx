@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { EMAIL_PATTERN } from "@/lib/agreements/validation";
 
 type PartyInput = {
   id?: string;
@@ -167,6 +168,7 @@ function PartyFields({
             <label className="col-span-1 text-sm">
               Email
               <input
+                type="email"
                 data-testid={`${kind}-${i}-email`}
                 className="mt-1 w-full border border-neutral-300 rounded-md px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-500"
                 value={party.email}
@@ -214,6 +216,12 @@ export function AgreementForm({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  function showError(message: string) {
+    setFormError(message);
+    requestAnimationFrame(() => errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
+  }
 
   function updateParty(kind: "landlords" | "tenants", index: number, field: keyof PartyInput, value: string) {
     setValues((v) => {
@@ -312,9 +320,11 @@ export function AgreementForm({
     }
     for (const l of values.landlords) {
       if (!l.full_name.trim() || !l.id_number.trim()) return "Every landlord needs a name and ID number.";
+      if (l.email.trim() && !EMAIL_PATTERN.test(l.email.trim())) return "One of the landlord email addresses is not valid.";
     }
     for (const t of values.tenants) {
       if (!t.full_name.trim() || !t.id_number.trim()) return "Every tenant needs a name and ID number.";
+      if (t.email.trim() && !EMAIL_PATTERN.test(t.email.trim())) return "One of the tenant email addresses is not valid.";
     }
     if (!values.property.address.trim()) return "Property address is required.";
     return null;
@@ -327,7 +337,7 @@ export function AgreementForm({
 
     const clientError = clientValidate();
     if (clientError) {
-      setFormError(clientError);
+      showError(clientError);
       return;
     }
 
@@ -369,7 +379,7 @@ export function AgreementForm({
           for (const fe of body.fieldErrors) map[fe.field] = fe.message;
           setFieldErrors(map);
         }
-        setFormError(body.error || "Something went wrong. Please try again.");
+        showError(body.error || "Something went wrong. Please try again.");
         setSubmitting(false);
         return;
       }
@@ -379,7 +389,7 @@ export function AgreementForm({
       router.refresh();
     } catch (err) {
       console.error(err);
-      setFormError("Something went wrong. Please try again.");
+      showError("Something went wrong. Please try again.");
       setSubmitting(false);
     }
   }
@@ -387,7 +397,9 @@ export function AgreementForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {formError && (
-        <div className="rounded-md bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">{formError}</div>
+        <div ref={errorRef} className="rounded-md bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+          {formError}
+        </div>
       )}
 
       <PartyFields
@@ -586,14 +598,19 @@ export function AgreementForm({
         </div>
       </fieldset>
 
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={submitting}
-          className="bg-neutral-900 text-white px-5 py-2.5 rounded-md text-sm hover:bg-neutral-700 disabled:opacity-50"
-        >
-          {submitting ? "Saving…" : mode === "create" ? "Generate Agreement" : "Save Changes"}
-        </button>
+      <div className="space-y-3">
+        {formError && (
+          <div className="rounded-md bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">{formError}</div>
+        )}
+        <div className="flex gap-3">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="bg-neutral-900 text-white px-5 py-2.5 rounded-md text-sm hover:bg-neutral-700 disabled:opacity-50"
+          >
+            {submitting ? "Saving…" : mode === "create" ? "Generate Agreement" : "Save Changes"}
+          </button>
+        </div>
       </div>
     </form>
   );

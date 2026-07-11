@@ -25,13 +25,13 @@ export async function generateReferenceNumber(supabase: SupabaseClient): Promise
 }
 
 async function resolveLandlords(supabase: SupabaseClient, landlords: PartyInput[]) {
-  const resolved: { id: string; full_name: string; id_number: string; address: string | null }[] = [];
-  for (const l of landlords) {
-    if (l.id) {
-      const { data, error } = await supabase.from("landlords").select().eq("id", l.id).single();
-      if (error) throw error;
-      resolved.push(data);
-    } else {
+  return Promise.all(
+    landlords.map(async (l) => {
+      if (l.id) {
+        const { data, error } = await supabase.from("landlords").select().eq("id", l.id).single();
+        if (error) throw error;
+        return data as { id: string; full_name: string; id_number: string; address: string | null };
+      }
       const { data, error } = await supabase
         .from("landlords")
         .insert({
@@ -44,20 +44,19 @@ async function resolveLandlords(supabase: SupabaseClient, landlords: PartyInput[
         .select()
         .single();
       if (error) throw error;
-      resolved.push(data);
-    }
-  }
-  return resolved;
+      return data as { id: string; full_name: string; id_number: string; address: string | null };
+    }),
+  );
 }
 
 async function resolveTenants(supabase: SupabaseClient, tenants: PartyInput[]) {
-  const resolved: { id: string; full_name: string; id_number: string; current_address: string | null }[] = [];
-  for (const t of tenants) {
-    if (t.id) {
-      const { data, error } = await supabase.from("tenants").select().eq("id", t.id).single();
-      if (error) throw error;
-      resolved.push(data);
-    } else {
+  return Promise.all(
+    tenants.map(async (t) => {
+      if (t.id) {
+        const { data, error } = await supabase.from("tenants").select().eq("id", t.id).single();
+        if (error) throw error;
+        return data as { id: string; full_name: string; id_number: string; current_address: string | null };
+      }
       const { data, error } = await supabase
         .from("tenants")
         .insert({
@@ -70,10 +69,9 @@ async function resolveTenants(supabase: SupabaseClient, tenants: PartyInput[]) {
         .select()
         .single();
       if (error) throw error;
-      resolved.push(data);
-    }
-  }
-  return resolved;
+      return data as { id: string; full_name: string; id_number: string; current_address: string | null };
+    }),
+  );
 }
 
 async function resolveProperty(supabase: SupabaseClient, property: AgreementFormInput["property"]) {
@@ -100,11 +98,12 @@ async function resolveProperty(supabase: SupabaseClient, property: AgreementForm
 }
 
 export async function createAgreement(supabase: SupabaseClient, input: AgreementFormInput) {
-  const property = await resolveProperty(supabase, input.property);
-  const landlords = await resolveLandlords(supabase, input.landlords);
-  const tenants = await resolveTenants(supabase, input.tenants);
-
-  const referenceNumber = await generateReferenceNumber(supabase);
+  const [property, landlords, tenants, referenceNumber] = await Promise.all([
+    resolveProperty(supabase, input.property),
+    resolveLandlords(supabase, input.landlords),
+    resolveTenants(supabase, input.tenants),
+    generateReferenceNumber(supabase),
+  ]);
 
   const generatedText = generateAgreementText({
     reference_number: referenceNumber,
@@ -137,14 +136,11 @@ export async function createAgreement(supabase: SupabaseClient, input: Agreement
     .single();
   if (agreementError) throw agreementError;
 
-  const { error: alError } = await supabase
-    .from("agreement_landlords")
-    .insert(landlords.map((l) => ({ agreement_id: agreement.id, landlord_id: l.id })));
+  const [{ error: alError }, { error: atError }] = await Promise.all([
+    supabase.from("agreement_landlords").insert(landlords.map((l) => ({ agreement_id: agreement.id, landlord_id: l.id }))),
+    supabase.from("agreement_tenants").insert(tenants.map((t) => ({ agreement_id: agreement.id, tenant_id: t.id }))),
+  ]);
   if (alError) throw alError;
-
-  const { error: atError } = await supabase
-    .from("agreement_tenants")
-    .insert(tenants.map((t) => ({ agreement_id: agreement.id, tenant_id: t.id })));
   if (atError) throw atError;
 
   return agreement;
@@ -155,38 +151,23 @@ export async function getAgreementFull(supabase: SupabaseClient, id: string): Pr
   if (error) throw error;
   if (!agreement) return null;
 
-  const { data: property, error: propError } = await supabase
-    .from("properties")
-    .select()
-    .eq("id", agreement.property_id)
-    .single();
-  if (propError) throw propError;
-
-  const { data: landlordLinks, error: llError } = await supabase
-    .from("agreement_landlords")
-    .select("landlord_id, landlords(*)")
-    .eq("agreement_id", id);
-  if (llError) throw llError;
-
-  const { data: tenantLinks, error: tlError } = await supabase
-    .from("agreement_tenants")
-    .select("tenant_id, tenants(*)")
-    .eq("agreement_id", id);
-  if (tlError) throw tlError;
-
-  const { data: clauses, error: clauseError } = await supabase
-    .from("agreement_clauses")
-    .select()
-    .eq("agreement_id", id)
-    .order("created_at", { ascending: true });
-  if (clauseError) throw clauseError;
+  const [propertyResult, landlordLinksResult, tenantLinksResult, clausesResult] = await Promise.all([
+    supabase.from("properties").select().eq("id", agreement.property_id).single(),
+    supabase.from("agreement_landlords").select("landlord_id, landlords(*)").eq("agreement_id", id),
+    supabase.from("agreement_tenants").select("tenant_id, tenants(*)").eq("agreement_id", id),
+    supabase.from("agreement_clauses").select().eq("agreement_id", id).order("created_at", { ascending: true }),
+  ]);
+  if (propertyResult.error) throw propertyResult.error;
+  if (landlordLinksResult.error) throw landlordLinksResult.error;
+  if (tenantLinksResult.error) throw tenantLinksResult.error;
+  if (clausesResult.error) throw clausesResult.error;
 
   return {
     ...agreement,
-    property,
-    landlords: (landlordLinks ?? []).map((l: any) => l.landlords).filter(Boolean),
-    tenants: (tenantLinks ?? []).map((t: any) => t.tenants).filter(Boolean),
-    clauses: clauses ?? [],
+    property: propertyResult.data,
+    landlords: (landlordLinksResult.data ?? []).map((l: any) => l.landlords).filter(Boolean),
+    tenants: (tenantLinksResult.data ?? []).map((t: any) => t.tenants).filter(Boolean),
+    clauses: clausesResult.data ?? [],
   };
 }
 
@@ -194,23 +175,30 @@ export async function updateAgreement(supabase: SupabaseClient, id: string, inpu
   const existing = await getAgreementFull(supabase, id);
   if (!existing) throw new Error("Agreement not found");
 
-  const property = await resolveProperty(supabase, input.property);
-  const landlords = await resolveLandlords(supabase, input.landlords);
-  const tenants = await resolveTenants(supabase, input.tenants);
+  const [property, landlords, tenants] = await Promise.all([
+    resolveProperty(supabase, input.property),
+    resolveLandlords(supabase, input.landlords),
+    resolveTenants(supabase, input.tenants),
+  ]);
 
-  const { error: deleteLlError } = await supabase.from("agreement_landlords").delete().eq("agreement_id", id);
-  if (deleteLlError) throw deleteLlError;
-  const { error: alError } = await supabase
-    .from("agreement_landlords")
-    .insert(landlords.map((l) => ({ agreement_id: id, landlord_id: l.id })));
-  if (alError) throw alError;
-
-  const { error: deleteTlError } = await supabase.from("agreement_tenants").delete().eq("agreement_id", id);
-  if (deleteTlError) throw deleteTlError;
-  const { error: atError } = await supabase
-    .from("agreement_tenants")
-    .insert(tenants.map((t) => ({ agreement_id: id, tenant_id: t.id })));
-  if (atError) throw atError;
+  await Promise.all([
+    (async () => {
+      const { error: deleteLlError } = await supabase.from("agreement_landlords").delete().eq("agreement_id", id);
+      if (deleteLlError) throw deleteLlError;
+      const { error: alError } = await supabase
+        .from("agreement_landlords")
+        .insert(landlords.map((l) => ({ agreement_id: id, landlord_id: l.id })));
+      if (alError) throw alError;
+    })(),
+    (async () => {
+      const { error: deleteTlError } = await supabase.from("agreement_tenants").delete().eq("agreement_id", id);
+      if (deleteTlError) throw deleteTlError;
+      const { error: atError } = await supabase
+        .from("agreement_tenants")
+        .insert(tenants.map((t) => ({ agreement_id: id, tenant_id: t.id })));
+      if (atError) throw atError;
+    })(),
+  ]);
 
   const acceptedClauses = existing.clauses.filter((c) => c.clause_text_review_status === "accepted").map((c) => c.clause_text);
 
@@ -324,20 +312,14 @@ export async function deleteAgreement(supabase: SupabaseClient, id: string) {
 export async function listAgreements(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from("agreements")
-    .select("id, reference_number, rental_amount, lease_start_date, lease_end_date, status, created_at, property_id")
+    .select(
+      "id, reference_number, rental_amount, lease_start_date, lease_end_date, status, created_at, property:properties(id, address, city)",
+    )
     .order("created_at", { ascending: false });
   if (error) throw error;
 
-  const propertyIds = Array.from(new Set((data ?? []).map((a) => a.property_id).filter(Boolean)));
-  const { data: properties, error: propError } = propertyIds.length
-    ? await supabase.from("properties").select("id, address, city").in("id", propertyIds)
-    : { data: [], error: null };
-  if (propError) throw propError;
-
-  const propertyMap = new Map((properties ?? []).map((p) => [p.id, p]));
-
-  return (data ?? []).map((a) => ({
+  return (data ?? []).map((a: any) => ({
     ...a,
-    property: propertyMap.get(a.property_id) ?? null,
+    property: Array.isArray(a.property) ? (a.property[0] ?? null) : (a.property ?? null),
   }));
 }

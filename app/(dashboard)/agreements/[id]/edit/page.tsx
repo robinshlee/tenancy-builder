@@ -9,8 +9,14 @@ export default async function EditAgreementPage({ params }: { params: Promise<{ 
   const supabase = await createClient();
 
   let agreement;
+  let landlords, tenants, properties;
   try {
-    agreement = await getAgreementFull(supabase, id);
+    [agreement, landlords, tenants, properties] = await Promise.all([
+      getAgreementFull(supabase, id),
+      listLandlords(supabase),
+      listTenants(supabase),
+      listProperties(supabase),
+    ]);
   } catch (err) {
     console.error(err);
     throw new Error("Something went wrong loading this agreement.");
@@ -19,12 +25,6 @@ export default async function EditAgreementPage({ params }: { params: Promise<{ 
   if (!agreement) {
     notFound();
   }
-
-  const [landlords, tenants, properties] = await Promise.all([
-    listLandlords(supabase),
-    listTenants(supabase),
-    listProperties(supabase),
-  ]);
 
   const initialValues: AgreementFormValues = {
     landlords: agreement.landlords.map((l) => ({

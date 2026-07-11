@@ -9,6 +9,7 @@ export type ValidationResult = {
 };
 
 const ID_NUMBER_PATTERN = /^[A-Za-z0-9][A-Za-z0-9-]{4,}$/;
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function validateAgreementInputs(
   input: Partial<AgreementFormInput>,
@@ -23,6 +24,9 @@ export function validateAgreementInputs(
       if (!l.full_name?.trim()) errors.push({ field: `landlords.${i}.full_name`, message: "Landlord name is required." });
       if (!l.id_number?.trim()) errors.push({ field: `landlords.${i}.id_number`, message: "Landlord ID number is required." });
       else if (!ID_NUMBER_PATTERN.test(l.id_number.trim())) warnings.push({ field: `landlords.${i}.id_number`, message: "Landlord ID number format looks unusual." });
+      if (l.email?.trim() && !EMAIL_PATTERN.test(l.email.trim())) {
+        errors.push({ field: `landlords.${i}.email`, message: "Landlord email address is not valid." });
+      }
     });
   }
 
@@ -33,6 +37,9 @@ export function validateAgreementInputs(
       if (!t.full_name?.trim()) errors.push({ field: `tenants.${i}.full_name`, message: "Tenant name is required." });
       if (!t.id_number?.trim()) errors.push({ field: `tenants.${i}.id_number`, message: "Tenant ID number is required." });
       else if (!ID_NUMBER_PATTERN.test(t.id_number.trim())) warnings.push({ field: `tenants.${i}.id_number`, message: "Tenant ID number format looks unusual." });
+      if (t.email?.trim() && !EMAIL_PATTERN.test(t.email.trim())) {
+        errors.push({ field: `tenants.${i}.email`, message: "Tenant email address is not valid." });
+      }
     });
   }
 
