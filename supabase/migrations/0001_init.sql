@@ -132,9 +132,9 @@ insert into properties (id, address, suburb, city, postal_code, property_type, b
 on conflict (id) do nothing;
 
 insert into agreements (id, reference_number, property_id, rental_amount, deposit_amount, lease_start_date, lease_end_date, payment_due_day, status, generated_text) values
-  ('d4000000-0000-0000-0000-000000000001', 'TA-2024-001', 'c3000000-0000-0000-0000-000000000001', 3500.00, 7000.00, '2024-02-01', '2025-01-31', 1, 'active', 'TENANCY AGREEMENT — TA-2024-001 — 14 Cantonments Road — Tenant: James Boateng — Landlord: Margaret Osei — Rent: GHS 3,500/month — 1 Feb 2024 to 31 Jan 2025'),
-  ('d4000000-0000-0000-0000-000000000002', 'TA-2024-002', 'c3000000-0000-0000-0000-000000000002', 5800.00, 11600.00, '2024-03-15', '2025-03-14', 15, 'active', 'TENANCY AGREEMENT — TA-2024-002 — 7 Airport Residential Avenue — Tenant: Ama Darko — Landlord: Kweku Asante — Rent: GHS 5,800/month — 15 Mar 2024 to 14 Mar 2025'),
-  ('d4000000-0000-0000-0000-000000000003', 'TA-2024-003', 'c3000000-0000-0000-0000-000000000003', 1800.00, 3600.00, '2024-06-01', '2025-05-31', 1, 'draft', 'TENANCY AGREEMENT — TA-2024-003 — 3 Tema Community 5 Street — Tenant: Efua Sarpong — Landlord: Abena Mensah — Rent: GHS 1,800/month — 1 Jun 2024 to 31 May 2025')
+  ('d4000000-0000-0000-0000-000000000001', 'TA-2024-001', 'c3000000-0000-0000-0000-000000000001', 3500.00, 7000.00, '2024-02-01', '2025-01-31', 1, 'active', 'TENANCY AGREEMENT — TA-2024-001 — 14 Cantonments Road — Tenant: James Boateng — Landlord: Margaret Osei — Rent: RM 3,500/month — 1 Feb 2024 to 31 Jan 2025'),
+  ('d4000000-0000-0000-0000-000000000002', 'TA-2024-002', 'c3000000-0000-0000-0000-000000000002', 5800.00, 11600.00, '2024-03-15', '2025-03-14', 15, 'active', 'TENANCY AGREEMENT — TA-2024-002 — 7 Airport Residential Avenue — Tenant: Ama Darko — Landlord: Kweku Asante — Rent: RM 5,800/month — 15 Mar 2024 to 14 Mar 2025'),
+  ('d4000000-0000-0000-0000-000000000003', 'TA-2024-003', 'c3000000-0000-0000-0000-000000000003', 1800.00, 3600.00, '2024-06-01', '2025-05-31', 1, 'draft', 'TENANCY AGREEMENT — TA-2024-003 — 3 Tema Community 5 Street — Tenant: Efua Sarpong — Landlord: Abena Mensah — Rent: RM 1,800/month — 1 Jun 2024 to 31 May 2025')
 on conflict (id) do nothing;
 
 insert into agreement_landlords (agreement_id, landlord_id) values

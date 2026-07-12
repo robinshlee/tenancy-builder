@@ -4,7 +4,7 @@ import { listAgreements } from "@/lib/agreements/server";
 import { AgreementActivityChart } from "@/app/components/AgreementActivityChart";
 
 function formatMoney(amount: number): string {
-  return `GHS ${Number(amount).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `RM ${Number(amount).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function formatDate(dateStr: string): string {

@@ -29,7 +29,7 @@ function formatDate(dateStr: string): string {
 }
 
 function formatMoney(amount: number): string {
-  return `GHS ${Number(amount).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `RM ${Number(amount).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function ordinal(n: number): string {

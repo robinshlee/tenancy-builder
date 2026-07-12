@@ -594,7 +594,7 @@ export function AgreementForm({
         <legend className="font-semibold text-white">Deal terms</legend>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 border border-white/10 rounded-md">
           <label className="text-sm">
-            Monthly rent (GHS) *
+            Monthly rent (RM) *
             <input
               data-testid="rental_amount"
               type="number"
@@ -607,7 +607,7 @@ export function AgreementForm({
             />
           </label>
           <label className="text-sm">
-            Deposit (GHS)
+            Deposit (RM)
             <input
               data-testid="deposit_amount"
               type="number"
