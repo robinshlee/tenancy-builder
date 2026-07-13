@@ -51,11 +51,11 @@ function AgreementPdfDocument({ agreement, template }: { agreement: AgreementFul
     .filter(Boolean);
   const scheduleItems: [string, string][] = (
     [
-      ["Notice Period", agreement.notice_period],
-      ["Renewal / Termination", agreement.renewal_terms],
-      ["Maintenance & Repairs", agreement.maintenance_responsibility],
-      ["Utilities", agreement.utilities_responsibility],
-      ["Inventory & Condition", agreement.inventory_notes],
+      ["Use of Premises", agreement.use_of_premises],
+      ["Renewal / Option", agreement.renewal_terms],
+      ["Rent Payment Details", agreement.rent_payment_details],
+      ["Utility Deposit", agreement.utility_deposit_amount != null ? formatMoney(agreement.utility_deposit_amount) : null],
+      ["Access Card / Deposit Terms", agreement.access_card_deposit_notes],
     ] as [string, string | null][]
   ).filter(([, v]) => v?.trim()) as [string, string][];
 

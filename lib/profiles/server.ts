@@ -23,6 +23,8 @@ export type PropertyProfileInput = {
   postal_code?: string;
   property_type?: string;
   bedrooms?: number;
+  bathrooms?: number;
+  furnishing?: string;
   description?: string;
   landlord_id: string;
   group_id?: string;
@@ -153,6 +155,8 @@ export async function createProperty(supabase: SupabaseClient, input: PropertyPr
       postal_code: input.postal_code || null,
       property_type: input.property_type || null,
       bedrooms: input.bedrooms ?? null,
+      bathrooms: input.bathrooms ?? null,
+      furnishing: input.furnishing || null,
       description: input.description || null,
       landlord_id: input.landlord_id,
       group_id: input.group_id || null,
@@ -173,6 +177,8 @@ export async function updateProperty(supabase: SupabaseClient, id: string, input
       postal_code: input.postal_code || null,
       property_type: input.property_type || null,
       bedrooms: input.bedrooms ?? null,
+      bathrooms: input.bathrooms ?? null,
+      furnishing: input.furnishing || null,
       description: input.description || null,
       landlord_id: input.landlord_id,
       group_id: input.group_id || null,

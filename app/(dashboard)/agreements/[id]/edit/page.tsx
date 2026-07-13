@@ -56,6 +56,8 @@ export default async function EditAgreementPage({ params }: { params: Promise<{ 
       postal_code: agreement.property.postal_code ?? "",
       property_type: agreement.property.property_type ?? "",
       bedrooms: agreement.property.bedrooms != null ? String(agreement.property.bedrooms) : "",
+      bathrooms: agreement.property.bathrooms != null ? String(agreement.property.bathrooms) : "",
+      furnishing: agreement.property.furnishing ?? "",
       description: agreement.property.description ?? "",
       group_id: agreement.property.group_id ?? "",
     },
@@ -66,11 +68,11 @@ export default async function EditAgreementPage({ params }: { params: Promise<{ 
     payment_due_day: String(agreement.payment_due_day),
     special_conditions: agreement.special_conditions ?? "",
     schedule: {
-      notice_period: agreement.notice_period ?? "",
+      use_of_premises: agreement.use_of_premises ?? "",
       renewal_terms: agreement.renewal_terms ?? "",
-      maintenance_responsibility: agreement.maintenance_responsibility ?? "",
-      utilities_responsibility: agreement.utilities_responsibility ?? "",
-      inventory_notes: agreement.inventory_notes ?? "",
+      rent_payment_details: agreement.rent_payment_details ?? "",
+      utility_deposit_amount: agreement.utility_deposit_amount != null ? String(agreement.utility_deposit_amount) : "",
+      access_card_deposit_notes: agreement.access_card_deposit_notes ?? "",
     },
   };
 

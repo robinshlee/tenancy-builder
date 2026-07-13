@@ -33,6 +33,7 @@ function PartyFields({
   onSelectExisting,
   onAdd,
   onRemove,
+  maxParties,
 }: {
   title: string;
   kind: "landlords" | "tenants";
@@ -42,6 +43,7 @@ function PartyFields({
   onSelectExisting: (index: number, id: string) => void;
   onAdd: () => void;
   onRemove: (index: number) => void;
+  maxParties?: number;
 }) {
   return (
     <fieldset className="space-y-4">
@@ -134,9 +136,13 @@ function PartyFields({
           </div>
         </div>
       ))}
-      <button type="button" onClick={onAdd} className="text-sm text-teal-300 hover:text-teal-200 hover:underline">
-        + Add another {title.toLowerCase().replace(/s$/, "")}
-      </button>
+      {maxParties && parties.length >= maxParties ? (
+        <p className="text-xs text-slate-500">Maximum {maxParties} {title.toLowerCase()} per agreement.</p>
+      ) : (
+        <button type="button" onClick={onAdd} className="text-sm text-teal-300 hover:text-teal-200 hover:underline">
+          + Add another {title.toLowerCase().replace(/s$/, "")}
+        </button>
+      )}
     </fieldset>
   );
 }
@@ -243,6 +249,8 @@ export function AgreementForm({
           postal_code: found.postal_code ?? "",
           property_type: found.property_type ?? "",
           bedrooms: found.bedrooms != null ? String(found.bedrooms) : "",
+          bathrooms: found.bathrooms != null ? String(found.bathrooms) : "",
+          furnishing: found.furnishing ?? "",
           description: found.description ?? "",
           group_id: found.group_id ?? "",
         },
@@ -262,7 +270,7 @@ export function AgreementForm({
   }
 
   function addTenant() {
-    setValues((v) => ({ ...v, tenants: [...v.tenants, { ...emptyParty }] }));
+    setValues((v) => (v.tenants.length >= 3 ? v : { ...v, tenants: [...v.tenants, { ...emptyParty }] }));
   }
 
   function removeTenant(index: number) {
@@ -314,6 +322,8 @@ export function AgreementForm({
         postal_code: values.property.postal_code || undefined,
         property_type: values.property.property_type || undefined,
         bedrooms: values.property.bedrooms ? Number(values.property.bedrooms) : undefined,
+        bathrooms: values.property.bathrooms ? Number(values.property.bathrooms) : undefined,
+        furnishing: values.property.furnishing || undefined,
         description: values.property.description || undefined,
         group_id: values.property.group_id || undefined,
       },
@@ -326,11 +336,13 @@ export function AgreementForm({
       payment_due_day: Number(values.payment_due_day),
       special_conditions: values.special_conditions || undefined,
       schedule: {
-        notice_period: values.schedule.notice_period || undefined,
+        use_of_premises: values.schedule.use_of_premises || undefined,
         renewal_terms: values.schedule.renewal_terms || undefined,
-        maintenance_responsibility: values.schedule.maintenance_responsibility || undefined,
-        utilities_responsibility: values.schedule.utilities_responsibility || undefined,
-        inventory_notes: values.schedule.inventory_notes || undefined,
+        rent_payment_details: values.schedule.rent_payment_details || undefined,
+        utility_deposit_amount: values.schedule.utility_deposit_amount
+          ? Number(values.schedule.utility_deposit_amount)
+          : undefined,
+        access_card_deposit_notes: values.schedule.access_card_deposit_notes || undefined,
       },
     };
 
@@ -409,11 +421,11 @@ export function AgreementForm({
               />
             </label>
             <label className="text-sm">
-              Suburb
+              Postal code
               <input
                 className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50 disabled:bg-navy-900/40 disabled:text-slate-500"
-                value={values.property.suburb}
-                onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, suburb: e.target.value } }))}
+                value={values.property.postal_code}
+                onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, postal_code: e.target.value } }))}
                 disabled={isExistingProperty}
               />
             </label>
@@ -424,40 +436,6 @@ export function AgreementForm({
                 className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50 disabled:bg-navy-900/40 disabled:text-slate-500"
                 value={values.property.city}
                 onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, city: e.target.value } }))}
-                disabled={isExistingProperty}
-              />
-            </label>
-            <label className="text-sm">
-              Postal code
-              <input
-                className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50 disabled:bg-navy-900/40 disabled:text-slate-500"
-                value={values.property.postal_code}
-                onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, postal_code: e.target.value } }))}
-                disabled={isExistingProperty}
-              />
-            </label>
-            <label className="text-sm">
-              Property type
-              <select
-                className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50 disabled:bg-navy-900/40 disabled:text-slate-500"
-                value={values.property.property_type}
-                onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, property_type: e.target.value } }))}
-                disabled={isExistingProperty}
-              >
-                <option value="">Select…</option>
-                <option value="Apartment">Apartment</option>
-                <option value="House">House</option>
-                <option value="Commercial">Commercial</option>
-              </select>
-            </label>
-            <label className="text-sm">
-              Bedrooms
-              <input
-                type="number"
-                min={0}
-                className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50 disabled:bg-navy-900/40 disabled:text-slate-500"
-                value={values.property.bedrooms}
-                onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, bedrooms: e.target.value } }))}
                 disabled={isExistingProperty}
               />
             </label>
@@ -479,6 +457,58 @@ export function AgreementForm({
                 </select>
               </label>
             )}
+            <div className="col-span-2 grid grid-cols-3 gap-3">
+              <label className="text-sm">
+                Bedrooms
+                <input
+                  type="number"
+                  min={0}
+                  className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50 disabled:bg-navy-900/40 disabled:text-slate-500"
+                  value={values.property.bedrooms}
+                  onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, bedrooms: e.target.value } }))}
+                  disabled={isExistingProperty}
+                />
+              </label>
+              <label className="text-sm">
+                Baths
+                <input
+                  type="number"
+                  min={0}
+                  className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50 disabled:bg-navy-900/40 disabled:text-slate-500"
+                  value={values.property.bathrooms}
+                  onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, bathrooms: e.target.value } }))}
+                  disabled={isExistingProperty}
+                />
+              </label>
+              <label className="text-sm">
+                Property type
+                <select
+                  className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50 disabled:bg-navy-900/40 disabled:text-slate-500"
+                  value={values.property.property_type}
+                  onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, property_type: e.target.value } }))}
+                  disabled={isExistingProperty}
+                >
+                  <option value="">Select…</option>
+                  <option value="Apartment">Apartment</option>
+                  <option value="House">House</option>
+                  <option value="Commercial">Commercial</option>
+                </select>
+              </label>
+            </div>
+            <label className="text-sm">
+              Furnishing
+              <select
+                className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50 disabled:bg-navy-900/40 disabled:text-slate-500"
+                value={values.property.furnishing}
+                onChange={(e) => setValues((v) => ({ ...v, property: { ...v.property, furnishing: e.target.value } }))}
+                disabled={isExistingProperty}
+              >
+                <option value="">Select…</option>
+                <option value="Unfurnished">Unfurnished</option>
+                <option value="Partially Furnished">Partially Furnished</option>
+                <option value="Fully Furnished">Fully Furnished</option>
+              </select>
+            </label>
             <label className="col-span-2 text-sm">
               Description
               <textarea
@@ -587,6 +617,7 @@ export function AgreementForm({
         onChange={updateTenant}
         onSelectExisting={selectExistingTenant}
         onAdd={addTenant}
+        maxParties={3}
         onRemove={removeTenant}
       />
 
@@ -672,16 +703,16 @@ export function AgreementForm({
         </p>
         <div className="grid grid-cols-1 gap-3 p-4 border border-white/10 rounded-md">
           <label className="text-sm">
-            Notice period
+            Use of premises
             <textarea
-              data-testid="schedule-notice_period"
+              data-testid="schedule-use_of_premises"
               className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 min-h-[60px] bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
-              value={values.schedule.notice_period}
-              onChange={(e) => setValues((v) => ({ ...v, schedule: { ...v.schedule, notice_period: e.target.value } }))}
+              value={values.schedule.use_of_premises}
+              onChange={(e) => setValues((v) => ({ ...v, schedule: { ...v.schedule, use_of_premises: e.target.value } }))}
             />
           </label>
           <label className="text-sm">
-            Renewal / termination terms
+            Renewal / option
             <textarea
               data-testid="schedule-renewal_terms"
               className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 min-h-[60px] bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
@@ -690,34 +721,39 @@ export function AgreementForm({
             />
           </label>
           <label className="text-sm">
-            Maintenance &amp; repair responsibilities
+            Rent payment details (bank account, etc.)
             <textarea
-              data-testid="schedule-maintenance_responsibility"
+              data-testid="schedule-rent_payment_details"
               className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 min-h-[60px] bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
-              value={values.schedule.maintenance_responsibility}
+              value={values.schedule.rent_payment_details}
               onChange={(e) =>
-                setValues((v) => ({ ...v, schedule: { ...v.schedule, maintenance_responsibility: e.target.value } }))
+                setValues((v) => ({ ...v, schedule: { ...v.schedule, rent_payment_details: e.target.value } }))
               }
             />
           </label>
           <label className="text-sm">
-            Utilities responsibility
-            <textarea
-              data-testid="schedule-utilities_responsibility"
-              className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 min-h-[60px] bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
-              value={values.schedule.utilities_responsibility}
+            Utility deposit (RM)
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              data-testid="schedule-utility_deposit_amount"
+              className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
+              value={values.schedule.utility_deposit_amount}
               onChange={(e) =>
-                setValues((v) => ({ ...v, schedule: { ...v.schedule, utilities_responsibility: e.target.value } }))
+                setValues((v) => ({ ...v, schedule: { ...v.schedule, utility_deposit_amount: e.target.value } }))
               }
             />
           </label>
           <label className="text-sm">
-            Inventory / condition notes
+            Access card / deposit terms
             <textarea
-              data-testid="schedule-inventory_notes"
+              data-testid="schedule-access_card_deposit_notes"
               className="mt-1 w-full border border-white/15 rounded-md px-3 py-2 min-h-[60px] bg-navy-800/60 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
-              value={values.schedule.inventory_notes}
-              onChange={(e) => setValues((v) => ({ ...v, schedule: { ...v.schedule, inventory_notes: e.target.value } }))}
+              value={values.schedule.access_card_deposit_notes}
+              onChange={(e) =>
+                setValues((v) => ({ ...v, schedule: { ...v.schedule, access_card_deposit_notes: e.target.value } }))
+              }
             />
           </label>
         </div>

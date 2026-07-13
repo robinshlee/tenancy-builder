@@ -17,11 +17,11 @@ export default async function NewAgreementPage() {
   const initialValues = {
     ...emptyFormValues,
     schedule: {
-      notice_period: settings.default_notice_period ?? "",
+      use_of_premises: settings.default_use_of_premises ?? "",
       renewal_terms: settings.default_renewal_terms ?? "",
-      maintenance_responsibility: settings.default_maintenance_responsibility ?? "",
-      utilities_responsibility: settings.default_utilities_responsibility ?? "",
-      inventory_notes: settings.default_inventory_notes ?? "",
+      rent_payment_details: settings.default_rent_payment_details ?? "",
+      utility_deposit_amount: "",
+      access_card_deposit_notes: settings.default_access_card_deposit_notes ?? "",
     },
   };
 

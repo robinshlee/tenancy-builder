@@ -1,34 +1,10 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { listProperties } from "@/lib/profiles/server";
-import { DeleteProfileButton } from "@/app/components/DeleteProfileButton";
-
-type PropertyRow = Awaited<ReturnType<typeof listProperties>>[number];
-
-function PropertyRow({ p }: { p: PropertyRow }) {
-  return (
-    <li className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-5 py-4">
-      <div className="min-w-0">
-        <p className="font-medium">{p.address}</p>
-        <p className="text-sm text-slate-400 truncate">
-          {[p.city, p.property_type, p.bedrooms ? `${p.bedrooms} bed` : null].filter(Boolean).join(" · ")}
-        </p>
-        <p className="text-xs text-slate-400 truncate">
-          Landlord: {p.landlord ? p.landlord.full_name : <span className="text-red-400">none assigned</span>}
-        </p>
-      </div>
-      <div className="flex items-center gap-4">
-        <Link href={`/properties/${p.id}/edit`} className="text-sm text-teal-300 hover:text-teal-200 hover:underline">
-          Edit
-        </Link>
-        <DeleteProfileButton apiPath={`/api/properties/${p.id}`} label={p.address} />
-      </div>
-    </li>
-  );
-}
+import { PropertiesList } from "@/app/components/PropertiesList";
 
 export default async function PropertiesPage() {
-  let properties: PropertyRow[] = [];
+  let properties: Awaited<ReturnType<typeof listProperties>> = [];
   let loadError = false;
   try {
     const supabase = await createClient();
@@ -36,18 +12,6 @@ export default async function PropertiesPage() {
   } catch (err) {
     console.error(err);
     loadError = true;
-  }
-
-  const grouped = new Map<string, { name: string; properties: PropertyRow[] }>();
-  const ungrouped: PropertyRow[] = [];
-  for (const p of properties) {
-    if (p.group) {
-      const existing = grouped.get(p.group.id);
-      if (existing) existing.properties.push(p);
-      else grouped.set(p.group.id, { name: p.group.name, properties: [p] });
-    } else {
-      ungrouped.push(p);
-    }
   }
 
   return (
@@ -79,31 +43,7 @@ export default async function PropertiesPage() {
         </div>
       )}
 
-      {!loadError && properties.length > 0 && (
-        <div className="space-y-6">
-          {[...grouped.entries()].map(([groupId, group]) => (
-            <div key={groupId}>
-              <h2 className="text-sm font-semibold text-slate-300 mb-2">{group.name}</h2>
-              <ul className="divide-y divide-white/10 border border-white/10 rounded-lg bg-navy-900/40">
-                {group.properties.map((p) => (
-                  <PropertyRow key={p.id} p={p} />
-                ))}
-              </ul>
-            </div>
-          ))}
-
-          {ungrouped.length > 0 && (
-            <div>
-              {grouped.size > 0 && <h2 className="text-sm font-semibold text-slate-300 mb-2">Ungrouped</h2>}
-              <ul className="divide-y divide-white/10 border border-white/10 rounded-lg bg-navy-900/40">
-                {ungrouped.map((p) => (
-                  <PropertyRow key={p.id} p={p} />
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
+      {!loadError && properties.length > 0 && <PropertiesList properties={properties} />}
     </main>
   );
 }

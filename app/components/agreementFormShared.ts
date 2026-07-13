@@ -20,6 +20,8 @@ export type PropertyInput = {
   postal_code: string;
   property_type: string;
   bedrooms: string;
+  bathrooms: string;
+  furnishing: string;
   description: string;
   group_id: string;
 };
@@ -57,6 +59,8 @@ export type ExistingProperty = {
   postal_code: string | null;
   property_type: string | null;
   bedrooms: number | null;
+  bathrooms: number | null;
+  furnishing: string | null;
   description: string | null;
   group_id: string | null;
   landlord_id: string | null;
@@ -64,11 +68,11 @@ export type ExistingProperty = {
 };
 
 export type ScheduleInput = {
-  notice_period: string;
+  use_of_premises: string;
   renewal_terms: string;
-  maintenance_responsibility: string;
-  utilities_responsibility: string;
-  inventory_notes: string;
+  rent_payment_details: string;
+  utility_deposit_amount: string;
+  access_card_deposit_notes: string;
 };
 
 export type AgreementFormValues = {
@@ -93,16 +97,18 @@ export const emptyProperty: PropertyInput = {
   postal_code: "",
   property_type: "",
   bedrooms: "",
+  bathrooms: "",
+  furnishing: "",
   description: "",
   group_id: "",
 };
 
 export const emptySchedule: ScheduleInput = {
-  notice_period: "",
+  use_of_premises: "",
   renewal_terms: "",
-  maintenance_responsibility: "",
-  utilities_responsibility: "",
-  inventory_notes: "",
+  rent_payment_details: "",
+  utility_deposit_amount: "",
+  access_card_deposit_notes: "",
 };
 
 export const emptyFormValues: AgreementFormValues = {

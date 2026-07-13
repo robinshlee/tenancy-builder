@@ -29,11 +29,11 @@ export function generateAgreementText(params: {
   special_conditions?: string | null;
   letterhead_name?: string | null;
   boilerplate_clauses?: string | null;
-  notice_period?: string | null;
+  use_of_premises?: string | null;
   renewal_terms?: string | null;
-  maintenance_responsibility?: string | null;
-  utilities_responsibility?: string | null;
-  inventory_notes?: string | null;
+  rent_payment_details?: string | null;
+  utility_deposit_amount?: number | null;
+  access_card_deposit_notes?: string | null;
 }): string {
   const {
     reference_number,
@@ -48,11 +48,11 @@ export function generateAgreementText(params: {
     special_conditions,
     letterhead_name,
     boilerplate_clauses,
-    notice_period,
+    use_of_premises,
     renewal_terms,
-    maintenance_responsibility,
-    utilities_responsibility,
-    inventory_notes,
+    rent_payment_details,
+    utility_deposit_amount,
+    access_card_deposit_notes,
   } = params;
 
   const propertyLine = [property.address, property.suburb, property.city].filter(Boolean).join(", ");
@@ -116,11 +116,11 @@ export function generateAgreementText(params: {
 
   const scheduleItems: [string, string][] = (
     [
-      ["Notice Period", notice_period],
-      ["Renewal / Termination", renewal_terms],
-      ["Maintenance & Repairs", maintenance_responsibility],
-      ["Utilities", utilities_responsibility],
-      ["Inventory & Condition", inventory_notes],
+      ["Use of Premises", use_of_premises],
+      ["Renewal / Option", renewal_terms],
+      ["Rent Payment Details", rent_payment_details],
+      ["Utility Deposit", utility_deposit_amount != null ? formatMoney(utility_deposit_amount) : null],
+      ["Access Card / Deposit Terms", access_card_deposit_notes],
     ] as [string, string | null | undefined][]
   ).filter((pair): pair is [string, string] => !!pair[1]?.trim());
 

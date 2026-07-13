@@ -28,6 +28,8 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
           postal_code: property.postal_code ?? "",
           property_type: property.property_type ?? "",
           bedrooms: property.bedrooms != null ? String(property.bedrooms) : "",
+          bathrooms: property.bathrooms != null ? String(property.bathrooms) : "",
+          furnishing: property.furnishing ?? "",
           description: property.description ?? "",
           landlord_id: property.landlord_id ?? "",
           group_id: property.group_id ?? "",

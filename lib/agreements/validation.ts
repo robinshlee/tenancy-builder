@@ -32,6 +32,8 @@ export function validateAgreementInputs(
 
   if (!input.tenants || input.tenants.length === 0) {
     errors.push({ field: "tenants", message: "At least one tenant is required." });
+  } else if (input.tenants.length > 3) {
+    errors.push({ field: "tenants", message: "A maximum of 3 tenants is allowed per agreement." });
   } else {
     input.tenants.forEach((t, i) => {
       if (!t.full_name?.trim()) errors.push({ field: `tenants.${i}.full_name`, message: "Tenant name is required." });

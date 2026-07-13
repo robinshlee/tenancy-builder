@@ -10,7 +10,7 @@ async function getTemplateSettings(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from("app_settings")
     .select(
-      "letterhead_name, boilerplate_clauses, default_notice_period, default_renewal_terms, default_maintenance_responsibility, default_utilities_responsibility, default_inventory_notes",
+      "letterhead_name, boilerplate_clauses, default_use_of_premises, default_renewal_terms, default_rent_payment_details, default_access_card_deposit_notes",
     )
     .eq("id", 1)
     .maybeSingle();
@@ -18,11 +18,10 @@ async function getTemplateSettings(supabase: SupabaseClient) {
   return {
     letterhead_name: data?.letterhead_name ?? null,
     boilerplate_clauses: data?.boilerplate_clauses ?? null,
-    default_notice_period: data?.default_notice_period ?? null,
+    default_use_of_premises: data?.default_use_of_premises ?? null,
     default_renewal_terms: data?.default_renewal_terms ?? null,
-    default_maintenance_responsibility: data?.default_maintenance_responsibility ?? null,
-    default_utilities_responsibility: data?.default_utilities_responsibility ?? null,
-    default_inventory_notes: data?.default_inventory_notes ?? null,
+    default_rent_payment_details: data?.default_rent_payment_details ?? null,
+    default_access_card_deposit_notes: data?.default_access_card_deposit_notes ?? null,
   };
 }
 
@@ -30,24 +29,23 @@ async function getTemplateSettings(supabase: SupabaseClient) {
 function resolveSchedule(
   input: ScheduleInput | undefined,
   defaults: {
-    default_notice_period: string | null;
+    default_use_of_premises: string | null;
     default_renewal_terms: string | null;
-    default_maintenance_responsibility: string | null;
-    default_utilities_responsibility: string | null;
-    default_inventory_notes: string | null;
+    default_rent_payment_details: string | null;
+    default_access_card_deposit_notes: string | null;
   },
   fallback?: ScheduleFields,
 ): ScheduleFields {
   return {
-    notice_period: input?.notice_period?.trim() || fallback?.notice_period || defaults.default_notice_period,
+    use_of_premises: input?.use_of_premises?.trim() || fallback?.use_of_premises || defaults.default_use_of_premises,
     renewal_terms: input?.renewal_terms?.trim() || fallback?.renewal_terms || defaults.default_renewal_terms,
-    maintenance_responsibility:
-      input?.maintenance_responsibility?.trim() ||
-      fallback?.maintenance_responsibility ||
-      defaults.default_maintenance_responsibility,
-    utilities_responsibility:
-      input?.utilities_responsibility?.trim() || fallback?.utilities_responsibility || defaults.default_utilities_responsibility,
-    inventory_notes: input?.inventory_notes?.trim() || fallback?.inventory_notes || defaults.default_inventory_notes,
+    rent_payment_details:
+      input?.rent_payment_details?.trim() || fallback?.rent_payment_details || defaults.default_rent_payment_details,
+    utility_deposit_amount: input?.utility_deposit_amount ?? fallback?.utility_deposit_amount ?? null,
+    access_card_deposit_notes:
+      input?.access_card_deposit_notes?.trim() ||
+      fallback?.access_card_deposit_notes ||
+      defaults.default_access_card_deposit_notes,
   };
 }
 
@@ -350,11 +348,11 @@ async function rebuildGeneratedText(supabase: SupabaseClient, agreement: Agreeme
     special_conditions: agreement.special_conditions,
     letterhead_name: templateSettings.letterhead_name,
     boilerplate_clauses: templateSettings.boilerplate_clauses,
-    notice_period: agreement.notice_period,
+    use_of_premises: agreement.use_of_premises,
     renewal_terms: agreement.renewal_terms,
-    maintenance_responsibility: agreement.maintenance_responsibility,
-    utilities_responsibility: agreement.utilities_responsibility,
-    inventory_notes: agreement.inventory_notes,
+    rent_payment_details: agreement.rent_payment_details,
+    utility_deposit_amount: agreement.utility_deposit_amount,
+    access_card_deposit_notes: agreement.access_card_deposit_notes,
   });
 
   return appendAcceptedClauses(generatedText, acceptedClauses);

@@ -20,6 +20,8 @@ export default async function NewPropertyPage() {
           postal_code: "",
           property_type: "",
           bedrooms: "",
+          bathrooms: "",
+          furnishing: "",
           description: "",
           landlord_id: "",
           group_id: "",

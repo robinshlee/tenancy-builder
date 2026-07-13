@@ -24,6 +24,8 @@ export type Property = {
   postal_code: string | null;
   property_type: string | null;
   bedrooms: number | null;
+  bathrooms: number | null;
+  furnishing: string | null;
   description: string | null;
   landlord_id: string | null;
   group_id: string | null;
@@ -38,11 +40,11 @@ export type PropertyGroup = {
 };
 
 export type ScheduleFields = {
-  notice_period: string | null;
+  use_of_premises: string | null;
   renewal_terms: string | null;
-  maintenance_responsibility: string | null;
-  utilities_responsibility: string | null;
-  inventory_notes: string | null;
+  rent_payment_details: string | null;
+  utility_deposit_amount: number | null;
+  access_card_deposit_notes: string | null;
 };
 
 export type Agreement = ScheduleFields & {
@@ -95,16 +97,18 @@ export type PropertyInputData = {
   postal_code?: string;
   property_type?: string;
   bedrooms?: number;
+  bathrooms?: number;
+  furnishing?: string;
   description?: string;
   group_id?: string;
 };
 
 export type ScheduleInput = {
-  notice_period?: string;
+  use_of_premises?: string;
   renewal_terms?: string;
-  maintenance_responsibility?: string;
-  utilities_responsibility?: string;
-  inventory_notes?: string;
+  rent_payment_details?: string;
+  utility_deposit_amount?: number;
+  access_card_deposit_notes?: string;
 };
 
 export type AgreementFormInput = {

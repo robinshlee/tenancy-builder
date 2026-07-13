@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { listTenants } from "@/lib/profiles/server";
-import { DeleteProfileButton } from "@/app/components/DeleteProfileButton";
+import { TenantsList } from "@/app/components/TenantsList";
 
 export default async function TenantsPage() {
   let tenants: Awaited<ReturnType<typeof listTenants>> = [];
@@ -38,27 +38,7 @@ export default async function TenantsPage() {
         </div>
       )}
 
-      {!loadError && tenants.length > 0 && (
-        <ul className="divide-y divide-white/10 border border-white/10 rounded-lg bg-navy-900/40">
-          {tenants.map((t) => (
-            <li key={t.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-5 py-4">
-              <div className="min-w-0">
-                <p className="font-medium">{t.full_name}</p>
-                <p className="text-sm text-slate-400 truncate">
-                  ID: {t.id_number}
-                  {t.phone ? ` · ${t.phone}` : ""}
-                </p>
-              </div>
-              <div className="flex items-center gap-4">
-                <Link href={`/tenants/${t.id}/edit`} className="text-sm text-teal-300 hover:text-teal-200 hover:underline">
-                  Edit
-                </Link>
-                <DeleteProfileButton apiPath={`/api/tenants/${t.id}`} label={t.full_name} />
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+      {!loadError && tenants.length > 0 && <TenantsList tenants={tenants} />}
     </main>
   );
 }
