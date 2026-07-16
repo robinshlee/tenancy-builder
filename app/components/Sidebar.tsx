@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SignOutButton } from "@/app/components/SignOutButton";
+import { AddIcon } from "@/app/components/icons";
 
 const NAV_ITEMS = [
   { href: "/agreements", label: "Agreements", icon: "document" },
@@ -18,7 +19,12 @@ const ADMIN_NAV_ITEMS = [
   { href: "/admin/template", label: "Agreement Template", icon: "file" },
 ] as const;
 
-type IconName = (typeof NAV_ITEMS)[number]["icon"] | (typeof ADMIN_NAV_ITEMS)[number]["icon"];
+const ACCOUNT_SUB_ITEMS = [
+  { href: "/account/profile", label: "Update Profile" },
+  { href: "/account/change-password", label: "Change Password" },
+] as const;
+
+type IconName = (typeof NAV_ITEMS)[number]["icon"] | (typeof ADMIN_NAV_ITEMS)[number]["icon"] | "account" | "chevron";
 
 function NavIcon({ name }: { name: IconName }) {
   const common = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
@@ -82,6 +88,19 @@ function NavIcon({ name }: { name: IconName }) {
           <path d="M14 3v5h5" />
         </svg>
       );
+    case "account":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 20c0-3.9 3.6-7 8-7s8 3.1 8 7" />
+        </svg>
+      );
+    case "chevron":
+      return (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      );
   }
 }
 
@@ -107,6 +126,9 @@ function CloseIcon() {
 function NavLinks({ isAdmin, onNavigate }: { isAdmin: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   const items = isAdmin ? [...NAV_ITEMS, ...ADMIN_NAV_ITEMS] : NAV_ITEMS;
+  const accountActive = ACCOUNT_SUB_ITEMS.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
+  const [accountOpen, setAccountOpen] = useState(accountActive);
+
   return (
     <nav className="flex flex-col gap-1">
       {items.map((item) => {
@@ -125,6 +147,39 @@ function NavLinks({ isAdmin, onNavigate }: { isAdmin: boolean; onNavigate?: () =
           </Link>
         );
       })}
+
+      <button
+        type="button"
+        onClick={() => setAccountOpen((v) => !v)}
+        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+          accountActive ? "bg-teal-500/15 text-teal-300 ring-1 ring-teal-400/30" : "text-slate-300 hover:bg-white/5 hover:text-white"
+        }`}
+      >
+        <NavIcon name="account" />
+        <span className="flex-1 text-left">Account</span>
+        <span className={`transition-transform ${accountOpen ? "rotate-90" : ""}`}>
+          <NavIcon name="chevron" />
+        </span>
+      </button>
+      {accountOpen && (
+        <div className="flex flex-col gap-1 pl-9">
+          {ACCOUNT_SUB_ITEMS.map((item) => {
+            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onNavigate}
+                className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                  active ? "bg-teal-500/15 text-teal-300 ring-1 ring-teal-400/30" : "text-slate-400 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </nav>
   );
 }
@@ -152,9 +207,9 @@ export function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
         <div className="mt-auto px-3 pt-6 border-t border-white/10 space-y-3">
           <Link
             href="/agreements/new"
-            className="block text-center bg-teal-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors"
+            className="flex items-center justify-center gap-1.5 text-center bg-teal-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors"
           >
-            + New Agreement
+            <AddIcon className="w-4 h-4" /> New Agreement
           </Link>
           <SignOutButton />
         </div>
@@ -194,9 +249,9 @@ export function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
               <Link
                 href="/agreements/new"
                 onClick={() => setOpen(false)}
-                className="block text-center bg-teal-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors"
+                className="flex items-center justify-center gap-1.5 text-center bg-teal-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors"
               >
-                + New Agreement
+                <AddIcon className="w-4 h-4" /> New Agreement
               </Link>
               <SignOutButton />
             </div>

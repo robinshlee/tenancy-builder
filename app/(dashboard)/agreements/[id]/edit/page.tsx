@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getAgreementFull } from "@/lib/agreements/server";
 import { listLandlords, listProperties, listPropertyGroups, listTenants } from "@/lib/profiles/server";
 import { AgreementForm, type AgreementFormValues } from "@/app/components/AgreementForm";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Edit Agreement" };
 
 export default async function EditAgreementPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

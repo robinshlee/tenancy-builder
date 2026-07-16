@@ -2,6 +2,9 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getTenant } from "@/lib/profiles/server";
 import { TenantForm } from "@/app/components/TenantForm";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Edit Tenant" };
 
 export default async function EditTenantPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

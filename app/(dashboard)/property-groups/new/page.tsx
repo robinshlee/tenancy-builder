@@ -1,4 +1,7 @@
 import { PropertyGroupForm } from "@/app/components/PropertyGroupForm";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "New Property Group" };
 
 export default function NewPropertyGroupPage() {
   return (

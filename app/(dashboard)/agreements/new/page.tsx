@@ -3,6 +3,9 @@ import { listLandlords, listProperties, listPropertyGroups, listTenants } from "
 import { getAppSettings } from "@/lib/admin/settings";
 import { AgreementForm } from "@/app/components/AgreementForm";
 import { emptyFormValues } from "@/app/components/agreementFormShared";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "New Agreement" };
 
 export default async function NewAgreementPage() {
   const supabase = await createClient();

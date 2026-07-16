@@ -1,25 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { SignOutButton } from "@/app/components/SignOutButton";
-
-const SECTION_TITLES: { prefix: string; title: string }[] = [
-  { prefix: "/agreements/new", title: "New Agreement" },
-  { prefix: "/agreements", title: "Agreements" },
-  { prefix: "/properties", title: "Properties" },
-  { prefix: "/property-groups", title: "Property Groups" },
-  { prefix: "/landlords", title: "Landlords" },
-  { prefix: "/tenants", title: "Tenants" },
-  { prefix: "/admin/users", title: "User Management" },
-  { prefix: "/admin/template", title: "Agreement Template" },
-];
-
-function sectionTitle(pathname: string): string {
-  if (pathname === "/agreements") return "Dashboard";
-  const match = SECTION_TITLES.find((s) => pathname === s.prefix || pathname.startsWith(`${s.prefix}/`));
-  return match?.title ?? "Dashboard";
-}
 
 function BellIcon() {
   return (
@@ -30,13 +13,26 @@ function BellIcon() {
   );
 }
 
-function initials(email: string | null): string {
-  if (!email) return "?";
-  return email.slice(0, 2).toUpperCase();
+function initials(name: string | null): string {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
 }
 
-export function TopBar({ email, role }: { email: string | null; role: "agent" | "admin" }) {
-  const pathname = usePathname();
+export function TopBar({
+  companyName,
+  displayName,
+  email,
+  role,
+  pendingApprovalCount = 0,
+}: {
+  companyName: string | null;
+  displayName: string | null;
+  email: string | null;
+  role: "agent" | "admin";
+  pendingApprovalCount?: number;
+}) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -52,8 +48,8 @@ export function TopBar({ email, role }: { email: string | null; role: "agent" | 
   }, []);
 
   return (
-    <header className="hidden md:flex items-center justify-between glass-panel border-b border-white/10 px-6 py-4">
-      <h1 className="text-lg font-semibold text-white">{sectionTitle(pathname)}</h1>
+    <header className="hidden md:flex items-center justify-between glass-panel border-b border-white/10 px-6 py-4 relative z-40">
+      <h1 className="text-lg font-semibold text-white">{companyName ?? "Tenancy Builder"}</h1>
 
       <div className="flex items-center gap-4">
         <div className="relative" ref={notifRef}>
@@ -61,13 +57,26 @@ export function TopBar({ email, role }: { email: string | null; role: "agent" | 
             type="button"
             onClick={() => setNotifOpen((v) => !v)}
             aria-label="Notifications"
-            className="w-9 h-9 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+            className="relative w-9 h-9 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
           >
             <BellIcon />
+            {pendingApprovalCount > 0 && (
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-teal-400" />
+            )}
           </button>
           {notifOpen && (
-            <div className="absolute right-0 mt-2 w-56 glass-panel rounded-md shadow-xl p-3 text-sm text-slate-300 z-50">
-              No new notifications.
+            <div className="absolute right-0 mt-2 w-64 bg-navy-850 border border-white/10 rounded-md shadow-2xl p-3 text-sm text-slate-300 z-50">
+              {pendingApprovalCount > 0 ? (
+                <Link
+                  href="/admin/users?status=pending"
+                  onClick={() => setNotifOpen(false)}
+                  className="block hover:text-white"
+                >
+                  {pendingApprovalCount} user{pendingApprovalCount === 1 ? "" : "s"} pending approval
+                </Link>
+              ) : (
+                "No new notifications."
+              )}
             </div>
           )}
         </div>
@@ -79,17 +88,31 @@ export function TopBar({ email, role }: { email: string | null; role: "agent" | 
             className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-white/5 transition-colors"
           >
             <span className="w-8 h-8 rounded-full bg-teal-500/20 ring-1 ring-teal-400/40 flex items-center justify-center text-teal-300 text-xs font-semibold">
-              {initials(email)}
+              {initials(displayName)}
             </span>
             <span className="hidden lg:flex flex-col items-start leading-tight">
-              <span className="text-sm text-white">{email ?? "Signed in"}</span>
+              <span className="text-sm text-white">{displayName ?? "Signed in"}</span>
               <span className="text-xs text-slate-400 capitalize">{role}</span>
             </span>
           </button>
           {menuOpen && (
-            <div className="absolute right-0 mt-2 w-48 glass-panel rounded-md shadow-xl p-2 z-50">
-              <p className="px-2 py-1.5 text-xs text-slate-400 truncate">{email}</p>
-              <div className="px-2 pb-1">
+            <div className="absolute right-0 mt-2 w-56 bg-navy-850 border border-white/10 rounded-md shadow-2xl p-2 z-50">
+              <p className="px-2 py-1.5 text-xs text-slate-400 truncate border-b border-white/10 mb-1">{email}</p>
+              <Link
+                href="/account/profile"
+                onClick={() => setMenuOpen(false)}
+                className="block px-2 py-1.5 rounded-md text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                Update profile
+              </Link>
+              <Link
+                href="/account/change-password"
+                onClick={() => setMenuOpen(false)}
+                className="block px-2 py-1.5 rounded-md text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                Change password
+              </Link>
+              <div className="px-2 pt-1 mt-1 border-t border-white/10">
                 <SignOutButton />
               </div>
             </div>

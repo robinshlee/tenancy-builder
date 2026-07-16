@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { DeleteProfileButton } from "@/app/components/DeleteProfileButton";
 import { SearchInput } from "@/app/components/SearchInput";
+import { IconLinkButton } from "@/app/components/IconButton";
+import { EditIcon } from "@/app/components/icons";
 
 export type TenantRow = {
   id: string;
@@ -38,10 +39,10 @@ export function TenantsList({ tenants }: { tenants: TenantRow[] }) {
                   {t.phone ? ` · ${t.phone}` : ""}
                 </p>
               </div>
-              <div className="flex items-center gap-4">
-                <Link href={`/tenants/${t.id}/edit`} className="text-sm text-teal-300 hover:text-teal-200 hover:underline">
-                  Edit
-                </Link>
+              <div className="flex items-center gap-1">
+                <IconLinkButton href={`/tenants/${t.id}/edit`} label={`Edit ${t.full_name}`} tone="primary">
+                  <EditIcon />
+                </IconLinkButton>
                 <DeleteProfileButton apiPath={`/api/tenants/${t.id}`} label={t.full_name} />
               </div>
             </li>

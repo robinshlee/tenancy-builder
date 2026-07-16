@@ -1,10 +1,14 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAgreementFull } from "@/lib/agreements/server";
 import { DeleteAgreementButton } from "@/app/components/DeleteAgreementButton";
 import { DownloadPdfButton } from "@/app/components/DownloadPdfButton";
 import { ClauseReview } from "@/app/components/ClauseReview";
+import { IconLinkButton } from "@/app/components/IconButton";
+import { EditIcon } from "@/app/components/icons";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Agreement" };
 
 export default async function AgreementPreviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -29,11 +33,11 @@ export default async function AgreementPreviewPage({ params }: { params: Promise
           <h1 className="text-2xl font-bold tracking-tight">{agreement.reference_number}</h1>
           <p className="text-sm text-slate-400 capitalize">{agreement.status}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+        <div className="flex flex-wrap items-center gap-1">
           <DownloadPdfButton id={id} referenceNumber={agreement.reference_number} />
-          <Link href={`/agreements/${id}/edit`} className="text-sm text-teal-300 hover:text-teal-200 hover:underline">
-            Edit
-          </Link>
+          <IconLinkButton href={`/agreements/${id}/edit`} label="Edit agreement" tone="primary">
+            <EditIcon />
+          </IconLinkButton>
           <DeleteAgreementButton id={id} />
         </div>
       </div>

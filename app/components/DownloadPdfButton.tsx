@@ -1,19 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/app/components/ToastProvider";
+import { IconButton } from "@/app/components/IconButton";
+import { DownloadIcon } from "@/app/components/icons";
 
 export function DownloadPdfButton({ id, referenceNumber }: { id: string; referenceNumber: string }) {
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const [downloading, setDownloading] = useState(false);
 
   async function handleDownload() {
     setDownloading(true);
-    setError(null);
     try {
       const res = await fetch(`/api/agreements/${id}/pdf`);
       if (!res.ok) {
-        setError("Something went wrong generating the PDF. Please try again.");
-        setDownloading(false);
+        showToast("Something went wrong generating the PDF. Please try again.", "error");
         return;
       }
       const blob = await res.blob();
@@ -26,22 +27,15 @@ export function DownloadPdfButton({ id, referenceNumber }: { id: string; referen
       a.remove();
       URL.revokeObjectURL(url);
     } catch {
-      setError("Something went wrong generating the PDF. Please try again.");
+      showToast("Something went wrong generating the PDF. Please try again.", "error");
     } finally {
       setDownloading(false);
     }
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <button
-        onClick={handleDownload}
-        disabled={downloading}
-        className="text-sm border border-white/15 text-slate-200 px-3 py-1.5 rounded-md hover:bg-white/5 disabled:opacity-50"
-      >
-        {downloading ? "Preparing…" : "Download PDF"}
-      </button>
-      {error && <span className="text-xs text-red-400">{error}</span>}
-    </div>
+    <IconButton onClick={handleDownload} label="Download PDF" tone="primary" disabled={downloading}>
+      <DownloadIcon />
+    </IconButton>
   );
 }

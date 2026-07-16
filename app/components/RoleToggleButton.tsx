@@ -3,16 +3,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Role } from "@/lib/admin/server";
+import { useToast } from "@/app/components/ToastProvider";
+import { IconButton } from "@/app/components/IconButton";
+import { ShieldDownIcon, ShieldUpIcon } from "@/app/components/icons";
 
 export function RoleToggleButton({ userId, currentRole }: { userId: string; currentRole: Role }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const nextRole: Role = currentRole === "admin" ? "agent" : "admin";
+  const label = nextRole === "admin" ? "Promote to admin" : "Demote to agent";
 
   async function handleClick() {
     setSubmitting(true);
-    setError(null);
     try {
       const res = await fetch(`/api/admin/users/${userId}`, {
         method: "PATCH",
@@ -21,27 +24,21 @@ export function RoleToggleButton({ userId, currentRole }: { userId: string; curr
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(body.error || "Something went wrong. Please try again.");
-        setSubmitting(false);
+        showToast(body.error || "Something went wrong. Please try again.", "error");
         return;
       }
+      showToast(nextRole === "admin" ? "Promoted to admin." : "Demoted to agent.", "success");
       router.refresh();
     } catch {
-      setError("Something went wrong. Please try again.");
+      showToast("Something went wrong. Please try again.", "error");
+    } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <span className="flex items-center gap-2">
-      <button
-        onClick={handleClick}
-        disabled={submitting}
-        className="text-sm text-teal-300 hover:text-teal-200 hover:underline disabled:opacity-50"
-      >
-        {submitting ? "Saving…" : nextRole === "admin" ? "Promote to admin" : "Demote to agent"}
-      </button>
-      {error && <span className="text-xs text-red-400">{error}</span>}
-    </span>
+    <IconButton onClick={handleClick} label={label} disabled={submitting}>
+      {nextRole === "admin" ? <ShieldUpIcon /> : <ShieldDownIcon />}
+    </IconButton>
   );
 }

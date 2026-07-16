@@ -2,6 +2,10 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { listAgreements } from "@/lib/agreements/server";
 import { AgreementsDashboard } from "@/app/components/AgreementsDashboard";
+import { AddIcon } from "@/app/components/icons";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Dashboard" };
 
 function monthlyActivity(agreements: { created_at: string }[]) {
   const now = new Date();
@@ -44,9 +48,9 @@ export default async function AgreementsPage() {
         <h1 className="text-2xl font-bold tracking-tight text-white">Dashboard</h1>
         <Link
           href="/agreements/new"
-          className="bg-teal-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors whitespace-nowrap"
+          className="inline-flex items-center gap-1.5 bg-teal-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors whitespace-nowrap"
         >
-          + New Agreement
+          <AddIcon className="w-4 h-4" /> New Agreement
         </Link>
       </div>
 
@@ -61,9 +65,9 @@ export default async function AgreementsPage() {
           <p className="text-slate-400 mb-4">No agreements yet. Create your first one.</p>
           <Link
             href="/agreements/new"
-            className="bg-teal-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors"
+            className="inline-flex items-center gap-1.5 bg-teal-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors"
           >
-            + New Agreement
+            <AddIcon className="w-4 h-4" /> New Agreement
           </Link>
         </div>
       )}

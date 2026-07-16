@@ -2,6 +2,10 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { listProperties } from "@/lib/profiles/server";
 import { PropertiesList } from "@/app/components/PropertiesList";
+import { AddIcon } from "@/app/components/icons";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Properties" };
 
 export default async function PropertiesPage() {
   let properties: Awaited<ReturnType<typeof listProperties>> = [];
@@ -22,8 +26,8 @@ export default async function PropertiesPage() {
           <Link href="/property-groups" className="text-sm text-teal-300 hover:text-teal-200 hover:underline whitespace-nowrap">
             Manage groups
           </Link>
-          <Link href="/properties/new" className="bg-teal-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors whitespace-nowrap">
-            + New Property
+          <Link href="/properties/new" className="inline-flex items-center gap-1.5 bg-teal-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors whitespace-nowrap">
+            <AddIcon className="w-4 h-4" /> New Property
           </Link>
         </div>
       </div>
@@ -37,8 +41,8 @@ export default async function PropertiesPage() {
       {!loadError && properties.length === 0 && (
         <div className="text-center py-20 border border-dashed border-white/15 rounded-lg">
           <p className="text-slate-400 mb-4">No properties yet. Create your first one.</p>
-          <Link href="/properties/new" className="bg-teal-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors">
-            + New Property
+          <Link href="/properties/new" className="inline-flex items-center gap-1.5 bg-teal-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors">
+            <AddIcon className="w-4 h-4" /> New Property
           </Link>
         </div>
       )}

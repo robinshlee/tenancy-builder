@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { listLandlords, listPropertyGroups } from "@/lib/profiles/server";
 import { PropertyForm } from "@/app/components/PropertyForm";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "New Property" };
 
 export default async function NewPropertyPage() {
   const supabase = await createClient();

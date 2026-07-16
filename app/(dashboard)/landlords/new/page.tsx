@@ -1,4 +1,7 @@
 import { LandlordForm } from "@/app/components/LandlordForm";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "New Landlord" };
 
 export default function NewLandlordPage() {
   return (

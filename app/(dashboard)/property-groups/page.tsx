@@ -2,6 +2,11 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { listPropertyGroups } from "@/lib/profiles/server";
 import { DeleteProfileButton } from "@/app/components/DeleteProfileButton";
+import { IconLinkButton } from "@/app/components/IconButton";
+import { AddIcon, EditIcon } from "@/app/components/icons";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Property Groups" };
 
 export default async function PropertyGroupsPage() {
   let groups: Awaited<ReturnType<typeof listPropertyGroups>> = [];
@@ -21,8 +26,8 @@ export default async function PropertyGroupsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Property Groups</h1>
           <p className="text-sm text-slate-400">Group units under a shared building or complex, e.g. a condo block.</p>
         </div>
-        <Link href="/property-groups/new" className="bg-teal-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors whitespace-nowrap">
-          + New Group
+        <Link href="/property-groups/new" className="inline-flex items-center gap-1.5 bg-teal-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors whitespace-nowrap">
+          <AddIcon className="w-4 h-4" /> New Group
         </Link>
       </div>
 
@@ -35,8 +40,8 @@ export default async function PropertyGroupsPage() {
       {!loadError && groups.length === 0 && (
         <div className="text-center py-20 border border-dashed border-white/15 rounded-lg">
           <p className="text-slate-400 mb-4">No property groups yet.</p>
-          <Link href="/property-groups/new" className="bg-teal-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors">
-            + New Group
+          <Link href="/property-groups/new" className="inline-flex items-center gap-1.5 bg-teal-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-teal-400 transition-colors">
+            <AddIcon className="w-4 h-4" /> New Group
           </Link>
         </div>
       )}
@@ -49,10 +54,10 @@ export default async function PropertyGroupsPage() {
                 <p className="font-medium">{g.name}</p>
                 <p className="text-sm text-slate-400 truncate">{[g.address, g.city].filter(Boolean).join(", ")}</p>
               </div>
-              <div className="flex items-center gap-4">
-                <Link href={`/property-groups/${g.id}/edit`} className="text-sm text-teal-300 hover:text-teal-200 hover:underline">
-                  Edit
-                </Link>
+              <div className="flex items-center gap-1">
+                <IconLinkButton href={`/property-groups/${g.id}/edit`} label={`Edit ${g.name}`} tone="primary">
+                  <EditIcon />
+                </IconLinkButton>
                 <DeleteProfileButton apiPath={`/api/property-groups/${g.id}`} label={g.name} />
               </div>
             </li>

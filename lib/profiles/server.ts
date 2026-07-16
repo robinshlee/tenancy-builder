@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getCurrentCompanyId } from "@/lib/admin/server";
 
 export type LandlordProfileInput = {
   full_name: string;
@@ -76,6 +77,7 @@ export async function listProperties(supabase: SupabaseClient) {
 }
 
 export async function createLandlord(supabase: SupabaseClient, input: LandlordProfileInput) {
+  const company_id = await getCurrentCompanyId(supabase);
   const { data, error } = await supabase
     .from("landlords")
     .insert({
@@ -84,6 +86,7 @@ export async function createLandlord(supabase: SupabaseClient, input: LandlordPr
       phone: input.phone || null,
       email: input.email || null,
       address: input.address || null,
+      company_id,
     })
     .select()
     .single();
@@ -111,6 +114,7 @@ export async function updateLandlord(supabase: SupabaseClient, id: string, input
 export const deleteLandlord = (supabase: SupabaseClient, id: string) => deleteRow(supabase, "landlords", id);
 
 export async function createTenant(supabase: SupabaseClient, input: TenantProfileInput) {
+  const company_id = await getCurrentCompanyId(supabase);
   const { data, error } = await supabase
     .from("tenants")
     .insert({
@@ -119,6 +123,7 @@ export async function createTenant(supabase: SupabaseClient, input: TenantProfil
       phone: input.phone || null,
       email: input.email || null,
       current_address: input.current_address || null,
+      company_id,
     })
     .select()
     .single();
@@ -146,6 +151,7 @@ export async function updateTenant(supabase: SupabaseClient, id: string, input: 
 export const deleteTenant = (supabase: SupabaseClient, id: string) => deleteRow(supabase, "tenants", id);
 
 export async function createProperty(supabase: SupabaseClient, input: PropertyProfileInput) {
+  const company_id = await getCurrentCompanyId(supabase);
   const { data, error } = await supabase
     .from("properties")
     .insert({
@@ -160,6 +166,7 @@ export async function createProperty(supabase: SupabaseClient, input: PropertyPr
       description: input.description || null,
       landlord_id: input.landlord_id,
       group_id: input.group_id || null,
+      company_id,
     })
     .select()
     .single();
@@ -193,9 +200,10 @@ export async function updateProperty(supabase: SupabaseClient, id: string, input
 export const deleteProperty = (supabase: SupabaseClient, id: string) => deleteRow(supabase, "properties", id);
 
 export async function createPropertyGroup(supabase: SupabaseClient, input: PropertyGroupInput) {
+  const company_id = await getCurrentCompanyId(supabase);
   const { data, error } = await supabase
     .from("property_groups")
-    .insert({ name: input.name, address: input.address || null, city: input.city || null })
+    .insert({ name: input.name, address: input.address || null, city: input.city || null, company_id })
     .select()
     .single();
   if (error) throw error;

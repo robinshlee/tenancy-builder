@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { appendAcceptedClauses, generateAgreementText } from "./text";
 import type { AgreementFormInput, AgreementFull, PartyInput, ScheduleFields, ScheduleInput } from "./types";
 import type { DraftedClause } from "./clauses";
+import { getCurrentCompanyId } from "@/lib/admin/server";
 
 /** A known, safe-to-display validation failure (as opposed to an unexpected DB/infra error). */
 export class AgreementInputError extends Error {}
@@ -70,7 +71,7 @@ export async function generateReferenceNumber(supabase: SupabaseClient): Promise
   return `${prefix}${String(next).padStart(3, "0")}`;
 }
 
-async function resolveLandlord(supabase: SupabaseClient, l: PartyInput) {
+async function resolveLandlord(supabase: SupabaseClient, l: PartyInput, company_id: string | null) {
   if (l.id) {
     const { data, error } = await supabase.from("landlords").select().eq("id", l.id).single();
     if (error) throw error;
@@ -84,6 +85,7 @@ async function resolveLandlord(supabase: SupabaseClient, l: PartyInput) {
       phone: l.phone || null,
       email: l.email || null,
       address: l.address || null,
+      company_id,
     })
     .select()
     .single();
@@ -91,7 +93,7 @@ async function resolveLandlord(supabase: SupabaseClient, l: PartyInput) {
   return data as { id: string; full_name: string; id_number: string; address: string | null };
 }
 
-async function resolveTenants(supabase: SupabaseClient, tenants: PartyInput[]) {
+async function resolveTenants(supabase: SupabaseClient, tenants: PartyInput[], company_id: string | null) {
   return Promise.all(
     tenants.map(async (t) => {
       if (t.id) {
@@ -107,6 +109,7 @@ async function resolveTenants(supabase: SupabaseClient, tenants: PartyInput[]) {
           phone: t.phone || null,
           email: t.email || null,
           current_address: t.address || null,
+          company_id,
         })
         .select()
         .single();
@@ -120,7 +123,7 @@ async function resolveTenants(supabase: SupabaseClient, tenants: PartyInput[]) {
  * A property has exactly one landlord. Selecting an existing property resolves its fixed
  * landlord_id; creating a new property requires (and persists) a landlord alongside it.
  */
-async function resolvePropertyAndLandlord(supabase: SupabaseClient, input: AgreementFormInput) {
+async function resolvePropertyAndLandlord(supabase: SupabaseClient, input: AgreementFormInput, company_id: string | null) {
   if (input.property.id) {
     const { data: property, error } = await supabase.from("properties").select().eq("id", input.property.id).single();
     if (error) throw error;
@@ -139,7 +142,7 @@ async function resolvePropertyAndLandlord(supabase: SupabaseClient, input: Agree
   if (!input.landlord) {
     throw new AgreementInputError("Landlord is required when creating a new property.");
   }
-  const landlord = await resolveLandlord(supabase, input.landlord);
+  const landlord = await resolveLandlord(supabase, input.landlord, company_id);
 
   const { data: property, error } = await supabase
     .from("properties")
@@ -153,6 +156,7 @@ async function resolvePropertyAndLandlord(supabase: SupabaseClient, input: Agree
       description: input.property.description || null,
       landlord_id: landlord.id,
       group_id: input.property.group_id || null,
+      company_id,
     })
     .select()
     .single();
@@ -162,9 +166,10 @@ async function resolvePropertyAndLandlord(supabase: SupabaseClient, input: Agree
 }
 
 export async function createAgreement(supabase: SupabaseClient, input: AgreementFormInput) {
+  const company_id = await getCurrentCompanyId(supabase);
   const [{ property, landlord }, tenants, referenceNumber, templateSettings] = await Promise.all([
-    resolvePropertyAndLandlord(supabase, input),
-    resolveTenants(supabase, input.tenants),
+    resolvePropertyAndLandlord(supabase, input, company_id),
+    resolveTenants(supabase, input.tenants, company_id),
     generateReferenceNumber(supabase),
     getTemplateSettings(supabase),
   ]);
@@ -200,6 +205,7 @@ export async function createAgreement(supabase: SupabaseClient, input: Agreement
       special_conditions: input.special_conditions || null,
       generated_text: generatedText,
       status: "draft",
+      company_id,
       ...schedule,
     })
     .select()
@@ -207,8 +213,10 @@ export async function createAgreement(supabase: SupabaseClient, input: Agreement
   if (agreementError) throw agreementError;
 
   const [{ error: alError }, { error: atError }] = await Promise.all([
-    supabase.from("agreement_landlords").insert([{ agreement_id: agreement.id, landlord_id: landlord.id }]),
-    supabase.from("agreement_tenants").insert(tenants.map((t) => ({ agreement_id: agreement.id, tenant_id: t.id }))),
+    supabase.from("agreement_landlords").insert([{ agreement_id: agreement.id, landlord_id: landlord.id, company_id }]),
+    supabase
+      .from("agreement_tenants")
+      .insert(tenants.map((t) => ({ agreement_id: agreement.id, tenant_id: t.id, company_id }))),
   ]);
   if (alError) throw alError;
   if (atError) throw atError;
@@ -245,9 +253,10 @@ export async function updateAgreement(supabase: SupabaseClient, id: string, inpu
   const existing = await getAgreementFull(supabase, id);
   if (!existing) throw new Error("Agreement not found");
 
+  const company_id = await getCurrentCompanyId(supabase);
   const [{ property, landlord }, tenants, templateSettings] = await Promise.all([
-    resolvePropertyAndLandlord(supabase, input),
-    resolveTenants(supabase, input.tenants),
+    resolvePropertyAndLandlord(supabase, input, company_id),
+    resolveTenants(supabase, input.tenants, company_id),
     getTemplateSettings(supabase),
   ]);
 
@@ -257,7 +266,7 @@ export async function updateAgreement(supabase: SupabaseClient, id: string, inpu
       if (deleteLlError) throw deleteLlError;
       const { error: alError } = await supabase
         .from("agreement_landlords")
-        .insert([{ agreement_id: id, landlord_id: landlord.id }]);
+        .insert([{ agreement_id: id, landlord_id: landlord.id, company_id }]);
       if (alError) throw alError;
     })(),
     (async () => {
@@ -265,7 +274,7 @@ export async function updateAgreement(supabase: SupabaseClient, id: string, inpu
       if (deleteTlError) throw deleteTlError;
       const { error: atError } = await supabase
         .from("agreement_tenants")
-        .insert(tenants.map((t) => ({ agreement_id: id, tenant_id: t.id })));
+        .insert(tenants.map((t) => ({ agreement_id: id, tenant_id: t.id, company_id })));
       if (atError) throw atError;
     })(),
   ]);
@@ -314,6 +323,7 @@ export async function updateAgreement(supabase: SupabaseClient, id: string, inpu
 
 export async function saveDraftedClauses(supabase: SupabaseClient, agreementId: string, clauses: DraftedClause[]) {
   if (clauses.length === 0) return;
+  const company_id = await getCurrentCompanyId(supabase);
   const { error } = await supabase.from("agreement_clauses").insert(
     clauses.map((c) => ({
       agreement_id: agreementId,
@@ -322,6 +332,7 @@ export async function saveDraftedClauses(supabase: SupabaseClient, agreementId: 
       clause_text_confidence: c.confidence,
       clause_text_review_status: "unreviewed",
       accepted: false,
+      company_id,
     })),
   );
   if (error) throw error;

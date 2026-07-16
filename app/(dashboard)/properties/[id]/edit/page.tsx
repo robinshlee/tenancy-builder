@@ -2,6 +2,9 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProperty, listLandlords, listPropertyGroups } from "@/lib/profiles/server";
 import { PropertyForm } from "@/app/components/PropertyForm";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Edit Property" };
 
 export default async function EditPropertyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

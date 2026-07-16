@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { isCurrentUserAdmin } from "@/lib/admin/server";
 import { getAppSettings } from "@/lib/admin/settings";
 import { TemplateSettingsForm } from "@/app/components/TemplateSettingsForm";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Agreement Template" };
 
 export default async function AdminTemplatePage() {
   const supabase = await createClient();
